@@ -50,4 +50,5 @@ spec:
     app.kubernetes.io/name: thanos-ruler
     thanos-ruler: {{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler
   type: "{{ .Values.thanosRuler.service.type }}"
+  sessionAffinity: "{{ .Values.thanosRuler.service.sessionAffinity }}"
 {{- end }}

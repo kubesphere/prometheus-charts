@@ -10,6 +10,7 @@ metadata:
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- include "kubesphere-monitor.labels" . | indent 4 }}
 spec:
   jobLabel: jobLabel
   selector:

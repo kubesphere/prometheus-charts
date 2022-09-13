@@ -76,6 +76,13 @@ heritage: {{ $.Release.Service | quote }}
 {{- end }}
 {{- end }}
 
+{{/* Add Kubesphere monitor label */}}
+{{- define "kubesphere-monitor.labels" }}
+{{- if .Values.ksMonitorLabels }}
+{{ toYaml .Values.ksMonitorLabels }}
+{{- end }}
+{{- end }}
+
 {{/* Create the name of kube-prometheus-stack service account to use */}}
 {{- define "kube-prometheus-stack.operator.serviceAccountName" -}}
 {{- if .Values.prometheusOperator.serviceAccount.create -}}

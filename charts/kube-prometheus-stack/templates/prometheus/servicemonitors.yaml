@@ -25,7 +25,14 @@ items:
 {{ toYaml .namespaceSelector | indent 8 }}
     {{- end }}
       selector:
+{{- if .selfMonitor }}
+        matchLabels:
+          app: {{ template "kube-prometheus-stack.name" $ }}-prometheus
+          release: {{ $.Release.Name | quote }}
+          self-monitor: "true"
+{{- else }}
 {{ toYaml .selector | indent 8 }}
+{{- end }}
     {{- if .targetLabels }}
       targetLabels:
 {{ toYaml .targetLabels | indent 8 }}
