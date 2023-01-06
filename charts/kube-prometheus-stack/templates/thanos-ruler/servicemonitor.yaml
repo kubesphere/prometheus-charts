@@ -7,6 +7,7 @@ metadata:
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}-thanos-ruler
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- include "kubesphere-monitor.labels" . | indent 4 }}
 spec:
   selector:
     matchLabels:
