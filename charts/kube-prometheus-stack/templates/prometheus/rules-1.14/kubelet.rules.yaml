@@ -1,5 +1,5 @@
 {{- /*
-Generated from 'kubelet.rules' group from https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubernetesControlPlane-prometheusRule.yaml
+Generated from 'kubelet.rules' group from https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kubernetes/kubernetes-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
@@ -12,7 +12,7 @@ metadata:
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
-{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.defaultRules.labels }}
 {{ toYaml .Values.defaultRules.labels | indent 4 }}
 {{- end }}
@@ -24,19 +24,16 @@ spec:
   groups:
   - name: kubelet.rules
     rules:
-    - expr: |
-        histogram_quantile(0.99, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m])) by (instance, le, cluster) * on(instance, cluster) group_left(node) kubelet_node_name{job="kubelet"})
+    - expr: histogram_quantile(0.99, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m])) by (instance, le, cluster) * on(instance, cluster) group_left(node) kubelet_node_name{job=~"kubelet|kubeedge"})
       labels:
-        quantile: "0.99"
+        quantile: '0.99'
       record: node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile
-    - expr: |
-        histogram_quantile(0.9, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m])) by (instance, le, cluster) * on(instance, cluster) group_left(node) kubelet_node_name{job="kubelet"})
+    - expr: histogram_quantile(0.9, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m])) by (instance, le, cluster) * on(instance, cluster) group_left(node) kubelet_node_name{job=~"kubelet|kubeedge"})
       labels:
-        quantile: "0.9"
+        quantile: '0.9'
       record: node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile
-    - expr: |
-        histogram_quantile(0.5, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m])) by (instance, le, cluster) * on(instance, cluster) group_left(node) kubelet_node_name{job="kubelet"})
+    - expr: histogram_quantile(0.5, sum(rate(kubelet_pleg_relist_duration_seconds_bucket[5m])) by (instance, le, cluster) * on(instance, cluster) group_left(node) kubelet_node_name{job=~"kubelet|kubeedge"})
       labels:
-        quantile: "0.5"
+        quantile: '0.5'
       record: node_quantile:kubelet_pleg_relist_duration_seconds:histogram_quantile
 {{- end }}

@@ -1,0 +1,58 @@
+{{- /*
+Generated from 'ks-apiserver' group from https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kubesphere/kubesphere-alertRuleGroups.yaml
+Do not change in-place! In order to change this file first read following link:
+https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
+*/ -}}
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.ksAPiserver }}
+apiVersion: alerting.kubesphere.io/v2beta1
+kind: GlobalRuleGroup
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "ks-apiserver" | trunc 63 | trimSuffix "-" }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+    alerting.kubesphere.io/builtin: "true"
+    alerting.kubesphere.io/enable: "true"
+{{- include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  rules:
+  - alert: ksApiSlow
+    annotations:
+{{- if .Values.defaultRules.additionalRuleAnnotations }}
+{{ toYaml .Values.defaultRules.additionalRuleAnnotations | indent 6 }}
+{{- end }}
+      message: 99th percentile of requests is {{`{{`}} $value {{`}}`}}s on ks-apiserver instance {{`{{`}} $labels.instance {{`}}`}} for {{`{{`}} $labels.verb {{`}}`}} {{`{{`}} $labels.resource {{`}}`}}.{{`{{`}} $labels.group {{`}}`}}/{{`{{`}} $labels.version {{`}}`}}
+      runbook_url: {{ .Values.defaultRules.runbookUrl }}/kubesphere/ksapislow
+      summary: ks-apiserver requests are slow.
+    expr: histogram_quantile(0.99, sum by(instance,group,resource,verb,version,le,cluster) (rate(ks_server_request_duration_seconds_bucket{group!="terminal.kubesphere.io", job="ks-apiserver"}[5m]))) > 5
+    for: 10m
+    labels:
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 6 }}
+{{- end }}
+      rule_id: 3f5d58fdbd68199d4ff515bfd09a2f87
+    severity: critical
+  - alert: ksApiserverDown
+    annotations:
+{{- if .Values.defaultRules.additionalRuleAnnotations }}
+{{ toYaml .Values.defaultRules.additionalRuleAnnotations | indent 6 }}
+{{- end }}
+      description: ksApiserver has disappeared from Prometheus target discovery.
+      runbook_url: {{ .Values.defaultRules.runbookUrl }}/kubesphere/ksapiserverdown
+      summary: Target disappeared from Prometheus target discovery.
+    expr: absent(up{job="ks-apiserver"} == 1)
+    for: 15m
+    labels:
+{{- if .Values.defaultRules.additionalRuleLabels }}
+{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 6 }}
+{{- end }}
+      rule_id: 766f549cf2737e1adc0c62e4f5fd0ba6
+    severity: critical
+{{- end }}

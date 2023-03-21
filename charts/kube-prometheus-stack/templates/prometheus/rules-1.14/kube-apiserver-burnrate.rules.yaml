@@ -1,5 +1,5 @@
 {{- /*
-Generated from 'kube-apiserver-burnrate.rules' group from https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubernetesControlPlane-prometheusRule.yaml
+Generated from 'kube-apiserver-burnrate.rules' group from https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kubernetes/kubernetes-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
@@ -12,7 +12,7 @@ metadata:
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
-{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.defaultRules.labels }}
 {{ toYaml .Values.defaultRules.labels | indent 4 }}
 {{- end }}
@@ -24,7 +24,7 @@ spec:
   groups:
   - name: kube-apiserver-burnrate.rules
     rules:
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -51,7 +51,7 @@ spec:
       labels:
         verb: read
       record: apiserver_request:burnrate1d
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -78,7 +78,7 @@ spec:
       labels:
         verb: read
       record: apiserver_request:burnrate1h
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -105,7 +105,7 @@ spec:
       labels:
         verb: read
       record: apiserver_request:burnrate2h
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -132,7 +132,7 @@ spec:
       labels:
         verb: read
       record: apiserver_request:burnrate30m
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -159,7 +159,7 @@ spec:
       labels:
         verb: read
       record: apiserver_request:burnrate3d
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -186,7 +186,7 @@ spec:
       labels:
         verb: read
       record: apiserver_request:burnrate5m
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -213,7 +213,7 @@ spec:
       labels:
         verb: read
       record: apiserver_request:burnrate6h
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -229,7 +229,7 @@ spec:
       labels:
         verb: write
       record: apiserver_request:burnrate1d
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -245,7 +245,7 @@ spec:
       labels:
         verb: write
       record: apiserver_request:burnrate1h
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -261,7 +261,7 @@ spec:
       labels:
         verb: write
       record: apiserver_request:burnrate2h
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -277,7 +277,7 @@ spec:
       labels:
         verb: write
       record: apiserver_request:burnrate30m
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -293,7 +293,7 @@ spec:
       labels:
         verb: write
       record: apiserver_request:burnrate3d
-    - expr: |
+    - expr: |-
         (
           (
             # too slow
@@ -309,7 +309,7 @@ spec:
       labels:
         verb: write
       record: apiserver_request:burnrate5m
-    - expr: |
+    - expr: |-
         (
           (
             # too slow

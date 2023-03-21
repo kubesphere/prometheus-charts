@@ -1,0 +1,57 @@
+{{- /*
+Generated from 'etcd.rules' group from https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/etcd/prometheus-rulesEtcd.yaml
+Do not change in-place! In order to change this file first read following link:
+https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
+*/ -}}
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.etcd }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "etcd.rules" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+{{- include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: etcd.rules
+    rules:
+    - expr: sum by(cluster) (up{job=~".*etcd.*"} == 1)
+      record: etcd:up:sum
+    - expr: sum(label_replace(sum(changes(etcd_server_leader_changes_seen_total{job=~".*etcd.*"}[1h])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_server_leader_changes_seen:sum_changes
+    - expr: sum(label_replace(sum(irate(etcd_server_proposals_failed_total{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_server_proposals_failed:sum_irate
+    - expr: sum(label_replace(sum(irate(etcd_server_proposals_applied_total{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_server_proposals_applied:sum_irate
+    - expr: sum(label_replace(sum(irate(etcd_server_proposals_committed_total{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_server_proposals_committed:sum_irate
+    - expr: sum(label_replace(sum(etcd_server_proposals_pending{job=~".*etcd.*"}) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_server_proposals_pending:sum
+    - expr: sum(label_replace(etcd_mvcc_db_total_size_in_bytes{job=~".*etcd.*"},"node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_mvcc_db_total_size:sum
+    - expr: sum(label_replace(sum(irate(etcd_network_client_grpc_received_bytes_total{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_network_client_grpc_received_bytes:sum_irate
+    - expr: sum(label_replace(sum(irate(etcd_network_client_grpc_sent_bytes_total{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_network_client_grpc_sent_bytes:sum_irate
+    - expr: sum(label_replace(sum(irate(grpc_server_started_total{job=~".*etcd.*",grpc_type="unary"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:grpc_server_started:sum_irate
+    - expr: sum(label_replace(sum(irate(grpc_server_handled_total{job=~".*etcd.*",grpc_type="unary",grpc_code!="OK"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:grpc_server_handled:sum_irate
+    - expr: sum(label_replace(sum(irate(grpc_server_msg_received_total{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:grpc_server_msg_received:sum_irate
+    - expr: sum(label_replace(sum(irate(grpc_server_msg_sent_total{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:grpc_server_msg_sent:sum_irate
+    - expr: sum(label_replace(sum(irate(etcd_disk_wal_fsync_duration_seconds_sum{job=~".*etcd.*"}[5m])) by (instance, cluster) / sum(irate(etcd_disk_wal_fsync_duration_seconds_count{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_disk_wal_fsync_duration:avg
+    - expr: sum(label_replace(sum(irate(etcd_disk_backend_commit_duration_seconds_sum{job=~".*etcd.*"}[5m])) by (instance, cluster) / sum(irate(etcd_disk_backend_commit_duration_seconds_count{job=~".*etcd.*"}[5m])) by (instance, cluster), "node", "$1", "instance", "(.*):.*")) by (node, cluster)
+      record: etcd:etcd_disk_backend_commit_duration:avg
+{{- end }}
