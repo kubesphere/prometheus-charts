@@ -1,0 +1,51 @@
+{{- /*
+Generated from 'etcd_histogram.rules' group from https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/etcd/prometheus-rulesEtcd.yaml
+Do not change in-place! In order to change this file first read following link:
+https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
+*/ -}}
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.etcd }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "etcd_histogram.rules" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+{{- include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: etcd_histogram.rules
+    rules:
+    - expr: histogram_quantile(0.99, sum(label_replace(sum(irate(etcd_disk_wal_fsync_duration_seconds_bucket{job=~".*etcd.*"}[5m])) by (instance, le, cluster), "node", "$1", "instance", "(.*):.*")) by (node, le, cluster))
+      labels:
+        quantile: '0.99'
+      record: etcd:etcd_disk_wal_fsync_duration:histogram_quantile
+    - expr: histogram_quantile(0.9, sum(label_replace(sum(irate(etcd_disk_wal_fsync_duration_seconds_bucket{job=~".*etcd.*"}[5m])) by (instance, le, cluster), "node", "$1", "instance", "(.*):.*")) by (node, le, cluster))
+      labels:
+        quantile: '0.9'
+      record: etcd:etcd_disk_wal_fsync_duration:histogram_quantile
+    - expr: histogram_quantile(0.5, sum(label_replace(sum(irate(etcd_disk_wal_fsync_duration_seconds_bucket{job=~".*etcd.*"}[5m])) by (instance, le, cluster), "node", "$1", "instance", "(.*):.*")) by (node, le, cluster))
+      labels:
+        quantile: '0.5'
+      record: etcd:etcd_disk_wal_fsync_duration:histogram_quantile
+    - expr: histogram_quantile(0.99, sum(label_replace(sum(irate(etcd_disk_backend_commit_duration_seconds_bucket{job=~".*etcd.*"}[5m])) by (instance, le, cluster), "node", "$1", "instance", "(.*):.*")) by (node, le, cluster))
+      labels:
+        quantile: '0.99'
+      record: etcd:etcd_disk_backend_commit_duration:histogram_quantile
+    - expr: histogram_quantile(0.9, sum(label_replace(sum(irate(etcd_disk_backend_commit_duration_seconds_bucket{job=~".*etcd.*"}[5m])) by (instance, le, cluster), "node", "$1", "instance", "(.*):.*")) by (node, le, cluster))
+      labels:
+        quantile: '0.9'
+      record: etcd:etcd_disk_backend_commit_duration:histogram_quantile
+    - expr: histogram_quantile(0.5, sum(label_replace(sum(irate(etcd_disk_backend_commit_duration_seconds_bucket{job=~".*etcd.*"}[5m])) by (instance, le, cluster), "node", "$1", "instance", "(.*):.*")) by (node, le, cluster))
+      labels:
+        quantile: '0.5'
+      record: etcd:etcd_disk_backend_commit_duration:histogram_quantile
+{{- end }}
