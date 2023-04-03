@@ -2,15 +2,27 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: prometheus-{{ include "prometheus.heritageName" . }}-thanos-sidecar
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-thanos-sidecar
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: prometheus-{{ include "prometheus.heritageName" . }}-thanos-sidecar
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-thanos-sidecar
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 spec:
   selector:
     matchLabels:
+      {{- if .Values.heritageNameOverride }}
+      app: prometheus-{{ include "prometheus.heritageName" . }}-thanos-discovery
+      {{- else }}
       app: {{ template "kube-prometheus-stack.name" . }}-thanos-discovery
+      {{- end }}
       release: {{ $.Release.Name | quote }}
   namespaceSelector:
     matchNames:

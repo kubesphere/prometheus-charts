@@ -3,7 +3,11 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ include "prometheus-operator.heritageName" . }}-admission-patch
+  {{- else }}
   name:  {{ template "kube-prometheus-stack.fullname" . }}-admission-patch
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
@@ -14,12 +18,20 @@ metadata:
 {{ toYaml . | indent 4 }}
 {{- end }}   
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: {{ include "prometheus-operator.heritageName" $ }}-admission-patch
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" $ }}-admission-patch
+    {{- end }}
 {{- include "kube-prometheus-stack.labels" $ | indent 4 }}
 spec:
   podSelector:
     matchLabels:
+      {{- if .Values.heritageNameOverride }}
+      app: {{ include "prometheus-operator.heritageName" $ }}-admission-patch
+      {{- else }}
       app: {{ template "kube-prometheus-stack.name" $ }}-admission-patch
+      {{- end }}
 {{- include "kube-prometheus-stack.labels" $ | indent 6 }}
   egress:
   - {}

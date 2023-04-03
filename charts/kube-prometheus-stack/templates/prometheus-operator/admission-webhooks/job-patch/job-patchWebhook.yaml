@@ -2,7 +2,11 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ include "prometheus-operator.heritageName" . }}-admission-patch
+  {{- else }}
   name:  {{ template "kube-prometheus-stack.fullname" . }}-admission-patch
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
@@ -11,7 +15,11 @@ metadata:
 {{ toYaml . | indent 4 }}
 {{- end }}   
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: {{ include "prometheus-operator.heritageName" $ }}-admission-patch
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" $ }}-admission-patch
+    {{- end }}
 {{- include "kube-prometheus-stack.labels" $ | indent 4 }}
 spec:
   {{- if .Capabilities.APIVersions.Has "batch/v1alpha1" }}
@@ -20,13 +28,21 @@ spec:
   {{- end }}
   template:
     metadata:
+      {{- if .Values.heritageNameOverride }}
+      name: {{ include "prometheus-operator.heritageName" . }}-admission-patch
+      {{- else }}
       name:  {{ template "kube-prometheus-stack.fullname" . }}-admission-patch
+      {{- end }}
 {{- with .Values.prometheusOperator.admissionWebhooks.patch.podAnnotations }}
       annotations:
 {{ toYaml . | indent 8 }}
 {{- end }}
       labels:
+        {{- if .Values.heritageNameOverride }}
+        app: {{ include "prometheus-operator.heritageName" $ }}-admission-patch
+        {{- else }}
         app: {{ template "kube-prometheus-stack.name" $ }}-admission-patch
+        {{- end }}
 {{- include "kube-prometheus-stack.labels" $ | indent 8 }}
     spec:
       {{- if .Values.prometheusOperator.admissionWebhooks.patch.priorityClassName }}
@@ -43,9 +59,17 @@ spec:
           imagePullPolicy: {{ .Values.prometheusOperator.admissionWebhooks.patch.image.pullPolicy }}
           args:
             - patch
+            {{- if .Values.heritageNameOverride }}
+            - --webhook-name={{ include "prometheus-operator.heritageName" . }}-admission
+            {{- else }}
             - --webhook-name={{ template "kube-prometheus-stack.fullname" . }}-admission
+            {{- end }}
             - --namespace={{ template "kube-prometheus-stack.namespace" . }}
+            {{- if .Values.heritageNameOverride }}
+            - --secret-name={{ include "prometheus-operator.heritageName" . }}-admission
+            {{- else }}
             - --secret-name={{ template "kube-prometheus-stack.fullname" . }}-admission
+            {{- end }}
             - --patch-failure-policy={{ .Values.prometheusOperator.admissionWebhooks.failurePolicy }}
           {{- with .Values.prometheusOperator.admissionWebhooks.patchWebhookJob }}
           securityContext:
@@ -54,7 +78,11 @@ spec:
           resources:
 {{ toYaml .Values.prometheusOperator.admissionWebhooks.patch.resources | indent 12 }}
       restartPolicy: OnFailure
+      {{- if .Values.heritageNameOverride }}
+      serviceAccountName: {{ include "prometheus-operator.heritageName" . }}-admission
+      {{- else }}
       serviceAccountName: {{ template "kube-prometheus-stack.fullname" . }}-admission
+      {{- end }}
       {{- with .Values.prometheusOperator.admissionWebhooks.patch.nodeSelector }}
       nodeSelector:
 {{ toYaml . | indent 8 }}

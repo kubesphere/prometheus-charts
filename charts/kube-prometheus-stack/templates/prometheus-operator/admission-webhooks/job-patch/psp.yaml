@@ -2,7 +2,11 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ include "prometheus-operator.heritageName" . }}-admission
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-admission
+  {{- end }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
@@ -10,7 +14,11 @@ metadata:
 {{ toYaml .Values.global.rbac.pspAnnotations | indent 4 }}
 {{- end }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: {{ include "prometheus-operator.heritageName" . }}-admission
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-admission
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 spec:
   privileged: false

@@ -199,10 +199,17 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ print "%(name)s" | replace "_" "-" | trunc 63 | trimSuffix "-" }}
+  {{- else }}
   name: {{ printf "%%s-%%s" (include "kube-prometheus-stack.fullname" .) "%(name)s" | trunc 63 | trimSuffix "-" }}
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
+    {{- if .Values.heritageNameOverride }}
+    prometheus: {{ include "prometheus.heritageName" . }}
+    {{- end }}
 {{- include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.defaultRules.labels }}
 {{ toYaml .Values.defaultRules.labels | indent 4 }}
@@ -226,7 +233,11 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 apiVersion: alerting.kubesphere.io/v2beta1
 kind: GlobalRuleGroup
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: %(name)s
+  {{- else }}
   name: {{ printf "%%s-%%s" (include "kube-prometheus-stack.fullname" .) "%(name)s" | trunc 63 | trimSuffix "-" }}
+  {{- end }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
     alerting.kubesphere.io/builtin: "true"

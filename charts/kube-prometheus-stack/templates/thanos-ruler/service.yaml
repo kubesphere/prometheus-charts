@@ -2,10 +2,18 @@
 apiVersion: v1
 kind: Service
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-thanos-ruler
+    {{- end }}
     self-monitor: {{ .Values.thanosRuler.serviceMonitor.selfMonitor | quote }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.thanosRuler.service.labels }}
@@ -48,7 +56,11 @@ spec:
 {{- end }}
   selector:
     app.kubernetes.io/name: thanos-ruler
-    thanos-ruler: {{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler
+    {{- if .Values.heritageNameOverride }}
+    app: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
+    {{- else }}
+    app: {{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler
+    {{- end }}
   type: "{{ .Values.thanosRuler.service.type }}"
   sessionAffinity: "{{ .Values.thanosRuler.service.sessionAffinity }}"
 {{- end }}

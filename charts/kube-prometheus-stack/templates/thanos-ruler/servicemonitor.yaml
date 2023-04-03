@@ -2,16 +2,28 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-thanos-ruler
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- include "kubesphere-monitor.labels" . | indent 4 }}
 spec:
   selector:
     matchLabels:
+      {{- if .Values.heritageNameOverride }}
+      app: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
+      {{- else }}
       app: {{ template "kube-prometheus-stack.name" . }}-thanos-ruler
+      {{- end }}
       release: {{ $.Release.Name | quote }}
       self-monitor: {{ .Values.thanosRuler.serviceMonitor.selfMonitor | quote }}
   namespaceSelector:

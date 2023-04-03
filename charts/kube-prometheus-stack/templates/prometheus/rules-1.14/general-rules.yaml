@@ -8,7 +8,11 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 apiVersion: alerting.kubesphere.io/v2beta1
 kind: GlobalRuleGroup
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: general-rules
+  {{- else }}
   name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "general-rules" | trunc 63 | trimSuffix "-" }}
+  {{- end }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
     alerting.kubesphere.io/builtin: "true"
@@ -84,7 +88,7 @@ spec:
         '
       runbook_url: {{ .Values.defaultRules.runbookUrl }}/general/infoinhibitor
       summary: Info-level alert inhibition.
-    expr: ALERTS{severity = "info"} == 1 unless on(namespace) ALERTS{alertname != "InfoInhibitor", severity =~ "warning|critical", alertstate="firing"} == 1
+    expr: ALERTS{severity = "info"} == 1 unless on(namespace, cluster) ALERTS{alertname != "InfoInhibitor", severity =~ "warning|critical", alertstate="firing"} == 1
     labels:
 {{- if .Values.defaultRules.additionalRuleLabels }}
 {{ toYaml .Values.defaultRules.additionalRuleLabels | indent 6 }}

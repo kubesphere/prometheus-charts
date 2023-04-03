@@ -2,10 +2,18 @@
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ include "prometheus-operator.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-operator
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: {{ include "prometheus-operator.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-operator
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 spec:
   resourcePolicy:
@@ -25,7 +33,11 @@ spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
+    {{- if .Values.heritageNameOverride }}
+    name: {{ include "prometheus-operator.heritageName" . }}
+    {{- else }}
     name: {{ template "kube-prometheus-stack.fullname" . }}-operator
+    {{- end }}
   {{- if .Values.prometheusOperator.verticalPodAutoscaler.updatePolicy }}
   updatePolicy:
     {{- if .Values.prometheusOperator.verticalPodAutoscaler.updatePolicy.updateMode }}

@@ -8,17 +8,29 @@
 apiVersion: v1
 kind: List
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: prometheus-{{ include "prometheus.heritageName" . }}-ingressperreplica
+  {{- else }}
   name: {{ include "kube-prometheus-stack.fullname" $ }}-prometheus-ingressperreplica
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" $ }}
 items:
 {{ range $i, $e := until $count }}
   - kind: Ingress
     apiVersion: {{ include "kube-prometheus-stack.ingress.apiVersion" $ }}
     metadata:
+      {{- if .Values.heritageNameOverride }}
+      name: prometheus-{{ include "prometheus.heritageName" $ }}-{{ $i }}
+      {{- else }}
       name: {{ include "kube-prometheus-stack.fullname" $ }}-prometheus-{{ $i }}
+      {{- end }}
       namespace: {{ template "kube-prometheus-stack.namespace" $ }}
       labels:
+        {{- if .Values.heritageNameOverride }}
+        app: prometheus-{{ include "prometheus.heritageName" $ }}
+        {{- else }}
         app: {{ include "kube-prometheus-stack.name" $ }}-prometheus
+        {{- end }}
       {{ include "kube-prometheus-stack.labels" $ | indent 8 }}
       {{- if $ingressValues.labels }}
 {{ toYaml $ingressValues.labels | indent 8 }}
@@ -45,11 +57,19 @@ items:
                 backend:
                   {{- if $apiIsStable }}
                   service:
+                    {{- if .Values.heritageNameOverride }}
+                    name: prometheus-{{ include "prometheus.heritageName" $ }}-{{ $i }}
+                    {{- else }}
                     name: {{ include "kube-prometheus-stack.fullname" $ }}-prometheus-{{ $i }}
+                    {{- end }}
                     port:
                       number: {{ $servicePort }}
                   {{- else }}
+                  {{- if .Values.heritageNameOverride }}
+                  serviceName: prometheus-{{ include "prometheus.heritageName" . }}-{{ $i }}
+                  {{- else }}
                   serviceName: {{ include "kube-prometheus-stack.fullname" $ }}-prometheus-{{ $i }}
+                  {{- end }}
                   servicePort: {{ $servicePort }}
       {{- end }}
       {{- end -}}

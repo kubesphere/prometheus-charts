@@ -2,10 +2,18 @@
 apiVersion: {{ include "kube-prometheus-stack.pdb.apiVersion" . }}
 kind: PodDisruptionBudget
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: alertmanager-{{ include "alertmanager.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: alertmanager-{{ include "alertmanager.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 spec:
   {{- if .Values.alertmanager.podDisruptionBudget.minAvailable }}
@@ -17,5 +25,9 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: alertmanager
+      {{- if .Values.heritageNameOverride }}
+      alertmanager: {{ include "alertmanager.heritageName" . }}
+      {{- else }}
       alertmanager: {{ template "kube-prometheus-stack.alertmanager.crname" . }}
+      {{- end }}
 {{- end }}

@@ -3,18 +3,34 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: alertmanager-{{ include "alertmanager.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: alertmanager-{{ include "alertmanager.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
+  {{- if .Values.heritageNameOverride }}
+  name: alertmanager-{{ include "alertmanager.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
+  {{- end }}
 subjects:
   - kind: ServiceAccount
+    {{- if .Values.heritageNameOverride }}
+    name: alertmanager-{{ include "alertmanager.heritageName" . }}
+    {{- else }}
     name: {{ template "kube-prometheus-stack.alertmanager.serviceAccountName" . }}
+    {{- end }}
     namespace: {{ template "kube-prometheus-stack.namespace" . }}
 {{- end }}
 {{- end }}

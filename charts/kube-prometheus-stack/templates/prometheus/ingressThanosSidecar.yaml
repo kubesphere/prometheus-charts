@@ -6,6 +6,9 @@
 {{- $paths := .Values.prometheus.thanosIngress.paths | default $routePrefix -}}
 {{- $apiIsStable := eq (include "kube-prometheus-stack.ingress.isStable" .) "true" -}}
 {{- $ingressSupportsPathType := eq (include "kube-prometheus-stack.ingress.supportsPathType" .) "true" -}}
+{{- if .Values.heritageNameOverride }}
+{{- $serviceName = printf "prometheus-%s" (include "prometheus.heritageName" .) -}}
+{{- end }}
 apiVersion: {{ include "kube-prometheus-stack.ingress.apiVersion" . }}
 kind: Ingress
 metadata:
@@ -13,9 +16,17 @@ metadata:
   annotations:
 {{ toYaml .Values.prometheus.thanosIngress.annotations | indent 4 }}
 {{- end }}
+  {{- if .Values.heritageNameOverride }}
+  name: prometheus-{{ include "prometheus.heritageName" . }}-thanos-gateway
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-thanos-gateway
+  {{- end }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: prometheus-{{ include "prometheus.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-prometheus
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.prometheus.thanosIngress.labels }}
 {{ toYaml .Values.prometheus.thanosIngress.labels | indent 4 }}

@@ -259,3 +259,20 @@ global:
   {{- end }}
 {{- end }}
 {{- end -}}
+
+
+{{/*
+Heritage names of the key resources in KubeSphere 3.x
+*/}}
+{{- define "prometheus-operator.heritageName" -}}
+{{- printf "prometheus-operator" -}}
+{{- end }}
+{{- define "prometheus.heritageName" -}}
+{{- printf "k8s" -}}
+{{- end }}
+{{- define "alertmanager.heritageName" -}}
+{{- printf "main" -}}
+{{- end }}
+{{- define "thanos-ruler.heritageName" -}}
+{{- printf "kubesphere" -}}
+{{- end }}
