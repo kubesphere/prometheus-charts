@@ -2,10 +2,18 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Alertmanager
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ include "alertmanager.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.alertmanager.crname" . }}
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: alertmanager-{{ include "alertmanager.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.alertmanager.annotations }}
   annotations:
@@ -30,13 +38,21 @@ spec:
 {{- end }}
   replicas: {{ .Values.alertmanager.alertmanagerSpec.replicas }}
   listenLocal: {{ .Values.alertmanager.alertmanagerSpec.listenLocal }}
+  {{- if .Values.heritageNameOverride }}
+  serviceAccountName: alertmanager-{{ include "alertmanager.heritageName" . }}
+  {{- else }}
   serviceAccountName: {{ template "kube-prometheus-stack.alertmanager.serviceAccountName" . }}
+  {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.externalUrl }}
   externalUrl: "{{ tpl .Values.alertmanager.alertmanagerSpec.externalUrl . }}"
 {{- else if and .Values.alertmanager.ingress.enabled .Values.alertmanager.ingress.hosts }}
   externalUrl: "http://{{ tpl (index .Values.alertmanager.ingress.hosts 0) . }}{{ .Values.alertmanager.alertmanagerSpec.routePrefix }}"
 {{- else }}
+  {{- if .Values.heritageNameOverride }}
+  externalUrl: http://alertmanager-{{ include "alertmanager.heritageName" . }}.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.alertmanager.service.port }}
+  {{- else }}
   externalUrl: http://{{ template "kube-prometheus-stack.fullname" . }}-alertmanager.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.alertmanager.service.port }}
+  {{- end }}
 {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.nodeSelector }}
   nodeSelector:
@@ -109,7 +125,11 @@ spec:
         labelSelector:
           matchExpressions:
             - {key: app.kubernetes.io/name, operator: In, values: [alertmanager]}
+            {{- if .Values.heritageNameOverride }}
+            - {key: alertmanager, operator: In, values: [{{ include "alertmanager.heritageName" . }}]}
+            {{- else }}
             - {key: alertmanager, operator: In, values: [{{ template "kube-prometheus-stack.alertmanager.crname" . }}]}
+            {{- end }}
 {{- else if eq .Values.alertmanager.alertmanagerSpec.podAntiAffinity "soft" }}
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -119,7 +139,11 @@ spec:
           labelSelector:
             matchExpressions:
               - {key: app.kubernetes.io/name, operator: In, values: [alertmanager]}
+              {{- if .Values.heritageNameOverride }}
+              - {key: alertmanager, operator: In, values: [{{ include "alertmanager.heritageName" . }}]}
+              {{- else }}
               - {key: alertmanager, operator: In, values: [{{ template "kube-prometheus-stack.alertmanager.crname" . }}]}
+              {{- end }}
 {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.tolerations }}
   tolerations:

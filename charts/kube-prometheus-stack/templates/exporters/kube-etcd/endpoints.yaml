@@ -2,9 +2,17 @@
 apiVersion: v1
 kind: Endpoints
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: etcd
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-kube-etcd
+  {{- end }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: etcd
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-kube-etcd
+    {{- end }}
     k8s-app: etcd-server
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
   namespace: kube-system

@@ -2,14 +2,27 @@
 apiVersion: admissionregistration.k8s.io/v1
 kind: ValidatingWebhookConfiguration
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ include "prometheus-operator.heritageName" . }}-admission
+  {{- else }}
   name:  {{ template "kube-prometheus-stack.fullname" . }}-admission
+  {{- end }}
 {{- if .Values.prometheusOperator.admissionWebhooks.certManager.enabled }}
   annotations:
+    {{- if .Values.heritageNameOverride }}
+    certmanager.k8s.io/inject-ca-from: {{ printf "%s/%s-admission" .Release.Namespace (include "prometheus-operator.heritageName" .) | quote }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s-admission" .Release.Namespace (include "prometheus-operator.heritageName" .) | quote }}
+    {{- else }}
     certmanager.k8s.io/inject-ca-from: {{ printf "%s/%s-admission" .Release.Namespace (include "kube-prometheus-stack.fullname" .) | quote }}
     cert-manager.io/inject-ca-from: {{ printf "%s/%s-admission" .Release.Namespace (include "kube-prometheus-stack.fullname" .) | quote }}
+    {{- end }}
 {{- end }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: {{ include "prometheus-operator.heritageName" . }}-admission
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" $ }}-admission
+    {{- end }}
 {{- include "kube-prometheus-stack.labels" $ | indent 4 }}
 webhooks:
   - name: prometheusrulemutate.monitoring.coreos.com
@@ -31,7 +44,11 @@ webhooks:
     clientConfig:
       service:
         namespace: {{ template "kube-prometheus-stack.namespace" . }}
+        {{- if .Values.heritageNameOverride }}
+        name: {{ include "prometheus-operator.heritageName" . }}
+        {{- else }}
         name: {{ template "kube-prometheus-stack.operator.fullname" $ }}
+        {{- end }}
         path: /admission-prometheusrules/validate
       {{- if and .Values.prometheusOperator.admissionWebhooks.caBundle (not .Values.prometheusOperator.admissionWebhooks.patch.enabled) (not .Values.prometheusOperator.admissionWebhooks.certManager.enabled) }}
       caBundle: {{ .Values.prometheusOperator.admissionWebhooks.caBundle }}

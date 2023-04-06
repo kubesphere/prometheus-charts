@@ -2,10 +2,18 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: kube-controller-manager
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-kube-controller-manager
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: kube-controller-manager
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-kube-controller-manager
+    {{- end }}
   {{- with .Values.kubeControllerManager.serviceMonitor.additionalLabels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
@@ -15,8 +23,12 @@ spec:
   jobLabel: jobLabel
   selector:
     matchLabels:
+      {{- if .Values.heritageNameOverride }}
+      app: kube-controller-manager
+      {{- else }}
       app: {{ template "kube-prometheus-stack.name" . }}-kube-controller-manager
       release: {{ $.Release.Name | quote }}
+      {{- end }}
   namespaceSelector:
     matchNames:
       - "kube-system"

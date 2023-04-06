@@ -2,9 +2,17 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: kubesphere-{{ include "prometheus-operator.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-operator
+  {{- end }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: {{ include "prometheus-operator.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-operator
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 rules:
 - apiGroups:

@@ -8,7 +8,11 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 apiVersion: alerting.kubesphere.io/v2beta1
 kind: GlobalRuleGroup
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: etcd
+  {{- else }}
   name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "etcd" | trunc 63 | trimSuffix "-" }}
+  {{- end }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
     alerting.kubesphere.io/builtin: "true"

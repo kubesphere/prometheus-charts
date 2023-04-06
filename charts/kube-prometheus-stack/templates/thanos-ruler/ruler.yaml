@@ -2,10 +2,18 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ThanosRuler
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ include "thanos-ruler.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-thanos-ruler
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.thanosRuler.annotations }}
   annotations:
@@ -29,13 +37,21 @@ spec:
 {{- end }}
   replicas: {{ .Values.thanosRuler.thanosRulerSpec.replicas }}
   listenLocal: {{ .Values.thanosRuler.thanosRulerSpec.listenLocal }}
+  {{- if .Values.heritageNameOverride }}
+  serviceAccountName: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
+  {{- else }}
   serviceAccountName: {{ template "kube-prometheus-stack.thanosRuler.serviceAccountName" . }}
+  {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.externalPrefix }}
   externalPrefix: "{{ tpl .Values.thanosRuler.thanosRulerSpec.externalPrefix . }}"
 {{- else if and .Values.thanosRuler.ingress.enabled .Values.thanosRuler.ingress.hosts }}
   externalPrefix: "http://{{ tpl (index .Values.thanosRuler.ingress.hosts 0) . }}{{ .Values.thanosRuler.thanosRulerSpec.routePrefix }}"
 {{- else }}
+  {{- if .Values.heritageNameOverride }}
+  externalPrefix: http://thanos-ruler-{{ include "thanos-ruler.heritageName" . }}.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.thanosRuler.service.port }}
+  {{- else }}
   externalPrefix: http://{{ template "kube-prometheus-stack.fullname" . }}-thanosRuler.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.thanosRuler.service.port }}
+  {{- end }}
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.nodeSelector }}
   nodeSelector:
@@ -69,7 +85,7 @@ spec:
 {{- end}}
 {{- if .Values.thanosRuler.thanosRulerSpec.alertmanagersUrl }}
   alertmanagersUrl:
-{{ toYaml .Values.thanosRuler.thanosRulerSpec.alertmanagersUrl | indent 4 }}
+{{ tpl (toYaml .Values.thanosRuler.thanosRulerSpec.alertmanagersUrl) . | indent 4 }}
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.alertmanagersConfig }}
   alertmanagersConfig:
@@ -77,7 +93,7 @@ spec:
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.queryEndpoints }}
   queryEndpoints:
-{{ toYaml .Values.thanosRuler.thanosRulerSpec.queryEndpoints | indent 4 }}
+{{ tpl (toYaml .Values.thanosRuler.thanosRulerSpec.queryEndpoints) . | indent 4 }}
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.queryConfig }}
   queryConfig:
@@ -126,7 +142,11 @@ spec:
         labelSelector:
           matchExpressions:
             - {key: app.kubernetes.io/name, operator: In, values: [thanos-ruler]}
+            {{- if .Values.heritageNameOverride }}
+            - {key: thanos-ruler, operator: In, values: [thanos-ruler-{{ include "thanos-ruler.heritageName" . }}]}
+            {{- else }}
             - {key: thanos-ruler, operator: In, values: [{{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler]}
+            {{- end }}
 {{- else if eq .Values.thanosRuler.thanosRulerSpec.podAntiAffinity "soft" }}
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -136,7 +156,11 @@ spec:
           labelSelector:
             matchExpressions:
               - {key: app.kubernetes.io/name, operator: In, values: [thanos-ruler]}
+              {{- if .Values.heritageNameOverride }}
+              - {key: thanos-ruler, operator: In, values: [thanos-ruler-{{ include "thanos-ruler.heritageName" . }}]}
+              {{- else }}
               - {key: thanos-ruler, operator: In, values: [{{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler]}
+              {{- end }}
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.tolerations }}
   tolerations:
@@ -152,7 +176,7 @@ spec:
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.containers }}
   containers:
-{{ toYaml .Values.thanosRuler.thanosRulerSpec.containers | indent 4 }}
+{{ tpl (toYaml .Values.thanosRuler.thanosRulerSpec.containers) . | indent 4 }}
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.initContainers }}
   initContainers:

@@ -2,10 +2,18 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ template "kube-prometheus-stack.fullname" . }}-kubesphere-apiserver
+  {{- if .Values.heritageNameOverride }}
+  name: ks-apiserver
+  {{- else }}
+  name: {{ template "kube-prometheus-stack.fullname" . }}-ks-apiserver
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    app: {{ template "kube-prometheus-stack.name" . }}-kubesphere-apiserver
+    {{- if .Values.heritageNameOverride }}
+    app: ks-apiserver
+    {{- else }}
+    app: {{ template "kube-prometheus-stack.name" . }}-ks-apiserver
+    {{- end }}
   {{- with .Values.ksApiServer.serviceMonitor.additionalLabels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}

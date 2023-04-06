@@ -4,10 +4,18 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  {{- if .Values.heritageNameOverride }}
+  name: {{ include "prometheus-operator.heritageName" . }}
+  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-operator
+  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
+    {{- if .Values.heritageNameOverride }}
+    app: {{ include "prometheus-operator.heritageName" . }}
+    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-operator
+    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.prometheusOperator.labels }}
 {{ toYaml .Values.prometheusOperator.labels | indent 4 }}
@@ -20,12 +28,20 @@ spec:
   replicas: 1
   selector:
     matchLabels:
+      {{- if .Values.heritageNameOverride }}
+      app: {{ include "prometheus-operator.heritageName" . }}
+      {{- else }}
       app: {{ template "kube-prometheus-stack.name" . }}-operator
+      {{- end }}
       release: {{ $.Release.Name | quote }}
   template:
     metadata:
       labels:
+        {{- if .Values.heritageNameOverride }}
+        app: {{ include "prometheus-operator.heritageName" . }}
+        {{- else }}
         app: {{ template "kube-prometheus-stack.name" . }}-operator
+        {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 8 }}
 {{- if .Values.prometheusOperator.podLabels }}
 {{ toYaml .Values.prometheusOperator.podLabels | indent 8 }}
@@ -39,7 +55,11 @@ spec:
       priorityClassName: {{ .Values.prometheusOperator.priorityClassName }}
     {{- end }}
       containers:
+        {{- if .Values.heritageNameOverride }}
+        - name: {{ include "prometheus-operator.heritageName" . }}
+        {{- else }}
         - name: {{ template "kube-prometheus-stack.name" . }}
+        {{- end }}
           {{- $registry := .Values.global.imageRegistry | default .Values.prometheusOperator.image.registry -}}
           {{- if .Values.prometheusOperator.image.sha }}
           image: "{{ $registry }}/{{ .Values.prometheusOperator.image.repository }}:{{ .Values.prometheusOperator.image.tag }}@sha256:{{ .Values.prometheusOperator.image.sha }}"
@@ -138,7 +158,11 @@ spec:
         - name: tls-secret
           secret:
             defaultMode: 420
+            {{- if .Values.heritageNameOverride }}
+            secretName: {{ include "prometheus-operator.heritageName" . }}-admission
+            {{- else }}
             secretName: {{ template "kube-prometheus-stack.fullname" . }}-admission
+            {{- end }}
 {{- end }}
     {{- with .Values.prometheusOperator.dnsConfig }}
       dnsConfig:
@@ -148,7 +172,11 @@ spec:
       securityContext:
 {{ toYaml .Values.prometheusOperator.securityContext | indent 8 }}
 {{- end }}
+      {{- if .Values.heritageNameOverride }}
+      serviceAccountName: {{ include "prometheus-operator.heritageName" . }}
+      {{- else }}
       serviceAccountName: {{ template "kube-prometheus-stack.operator.serviceAccountName" . }}
+      {{- end }}
 {{- if .Values.prometheusOperator.hostNetwork }}
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
