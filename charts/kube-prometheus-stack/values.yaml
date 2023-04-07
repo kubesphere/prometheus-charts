@@ -3642,7 +3642,7 @@ thanosRuler:
     ## DEPRECATED. Define URLs to send alerts to Alertmanager. For Thanos v0.10.0 and higher, alertmanagersConfig should be used instead.
     ## Note: this field will be ignored if alertmanagersConfig is specified. Maps to the alertmanagers.url Thanos Ruler arg.
     alertmanagersUrl:
-      - "dnssrv+http://alertmanager-operated.{{ .Release.Namespace }}.svc:9093"
+      - 'dnssrv+http://alertmanager-operated.{{ template "kube-prometheus-stack.namespace" . }}.svc:9093'
 
     ## The external URL the Thanos Ruler instances will be available under. This is necessary to generate correct URLs. This is necessary if Thanos Ruler is not served from root of a DNS name. string false
     ##
@@ -3664,7 +3664,7 @@ thanosRuler:
     ## QueryEndpoints defines Thanos querier endpoints from which to query metrics.
     ## Maps to the --query flag of thanos ruler.
     queryEndpoints:
-      - "prometheus-operated.{{ .Release.Namespace }}.svc:9090"
+      - 'prometheus-operated.{{ template "kube-prometheus-stack.namespace" . }}.svc:9090'
 
     ## Define configuration for connecting to thanos query instances. If this is defined, the queryEndpoints field will be ignored.
     ## Maps to the query.config CLI argument. Only available with thanos v0.11.0 and higher.
@@ -3771,14 +3771,14 @@ thanosRuler:
           - '--alert.label-drop=thanos_ruler_replica'
           - '--log.format=logfmt'
           - '--rule-file=/etc/thanos/rules/*/*.yaml'
-          - '--query=prometheus-operated.{{ .Release.Namespace }}.svc:9090'
-          - '--alertmanagers.url=dnssrv+http://alertmanager-operated.{{ .Release.Namespace }}.svc:9093'
+          - '--query=prometheus-operated.{{ template "kube-prometheus-stack.namespace" . }}.svc:9090'
+          - '--alertmanagers.url=dnssrv+http://alertmanager-operated.{{ template "kube-prometheus-stack.namespace" . }}.svc:9093'
           - |
             --web.external-prefix=
             {{- if .Values.heritageNameOverride -}}
-            http://thanos-ruler-{{ include "thanos-ruler.heritageName" . }}.{{ .Release.Namespace }}:10902
+            http://thanos-ruler-{{ include "thanos-ruler.heritageName" . }}.{{ template "kube-prometheus-stack.namespace" . }}:10902
             {{- else -}}
-            http://{{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler.{{ .Release.Namespace }}:10902'
+            http://{{ template "kube-prometheus-stack.fullname" . }}-thanos-ruler.{{ template "kube-prometheus-stack.namespace" . }}:10902'
             {{- end }}
           - '--web.route-prefix=/'
           - |
@@ -3786,9 +3786,9 @@ thanosRuler:
               {{- $count := .Values.prometheus.prometheusSpec.replicas | int -}}
               {{- range $i := until $count }}
               {{- if $.Values.heritageNameOverride }}
-              - url: http://prometheus-{{ include "prometheus.heritageName" $ }}-{{ $i }}.prometheus-operated.{{ $.Release.Namespace }}.svc:9090/api/v1/write
+              - url: http://prometheus-{{ include "prometheus.heritageName" $ }}-{{ $i }}.prometheus-operated.{{ template "kube-prometheus-stack.namespace" $ }}.svc:9090/api/v1/write
               {{- else }}
-              - url: http://prometheus-{{ template "kube-prometheus-stack.prometheus.crname" $ }}-{{ $i }}.prometheus-operated.{{ $.Release.Namespace }}.svc:9090/api/v1/write
+              - url: http://prometheus-{{ template "kube-prometheus-stack.prometheus.crname" $ }}-{{ $i }}.prometheus-operated.{{ template "kube-prometheus-stack.namespace" $ }}.svc:9090/api/v1/write
               {{- end }}
               {{- end }}
     # Additional volumes on the output StatefulSet definition.

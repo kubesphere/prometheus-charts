@@ -10,11 +10,11 @@ metadata:
 {{- if .Values.prometheusOperator.admissionWebhooks.certManager.enabled }}
   annotations:
     {{- if .Values.heritageNameOverride }}
-    certmanager.k8s.io/inject-ca-from: {{ printf "%s/%s-admission" .Release.Namespace (include "prometheus-operator.heritageName" .) | quote }}
-    cert-manager.io/inject-ca-from: {{ printf "%s/%s-admission" .Release.Namespace (include "prometheus-operator.heritageName" .) | quote }}
+    certmanager.k8s.io/inject-ca-from: {{ printf "%s/%s-admission" (include "kube-prometheus-stack.namespace" .) (include "prometheus-operator.heritageName" .) | quote }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s-admission" (include "kube-prometheus-stack.namespace" .) (include "prometheus-operator.heritageName" .) | quote }}
     {{- else }}
-    certmanager.k8s.io/inject-ca-from: {{ printf "%s/%s-admission" .Release.Namespace (include "kube-prometheus-stack.fullname" .) | quote }}
-    cert-manager.io/inject-ca-from: {{ printf "%s/%s-admission" .Release.Namespace (include "kube-prometheus-stack.fullname" .) | quote }}
+    certmanager.k8s.io/inject-ca-from: {{ printf "%s/%s-admission" (include "kube-prometheus-stack.namespace" .) (include "kube-prometheus-stack.fullname" .) | quote }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s-admission" (include "kube-prometheus-stack.namespace" .) (include "kube-prometheus-stack.fullname" .) | quote }}
     {{- end }}
 {{- end }}
   labels:
