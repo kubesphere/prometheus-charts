@@ -37,44 +37,26 @@ ksMonitorLabels:
   app.kubernetes.io/vendor: kubesphere
 
 ## Create default rules for monitoring the cluster
+## The alerting rules should be enabled in Alert Extention because they have been migrated there
 ##
 defaultRules:
   create: true
   rules:
-    alertmanager: true
     etcd: true
-    configReloaders: true
-    general: true
     k8s: true
     kubeApiserverAvailability: true
     kubeApiserverBurnrate: true
     kubeApiserverHistogram: true
-    kubeApiserverSlos: true
-    kubeControllerManager: true
     kubelet: true
-    kubeProxy: false
-    kubePrometheusGeneral: true
     kubePrometheusNodeRecording: true
-    kubernetesApps: true
-    kubernetesResources: true
-    kubernetesStorage: true
-    kubernetesSystem: true
-    kubeSchedulerAlerting: true
     kubeSchedulerRecording: true
-    kubeStateMetrics: true
-    network: true
     node: true
-    nodeExporterAlerting: true
     nodeExporterRecording: true
     prometheus: true
-    prometheusOperator: true
-    thanosRuler: true
     coreDns: true
     cluster: true
     namespace: true
     apiserver: true
-    ksApiserver: true
-    ksControllerManager: true
 
   ## Reduce app namespace alert scope
   appNamespacesTarget: ".*"
