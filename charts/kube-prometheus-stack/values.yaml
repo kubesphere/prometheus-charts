@@ -42,21 +42,17 @@ ksMonitorLabels:
 defaultRules:
   create: true
   rules:
-    etcd: true
     k8s: true
     kubeApiserverAvailability: true
     kubeApiserverBurnrate: true
     kubeApiserverHistogram: true
-    kubelet: true
+    kubePrometheusGeneral: true
     kubePrometheusNodeRecording: true
     kubeSchedulerRecording: true
-    node: true
+    kubelet: true
     nodeExporterRecording: true
-    prometheus: true
-    coreDns: true
-    cluster: true
-    namespace: true
-    apiserver: true
+    node: true
+    whizardTelemetry: true
 
   ## Reduce app namespace alert scope
   appNamespacesTarget: ".*"

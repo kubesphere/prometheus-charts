@@ -1,0 +1,43 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    app.kubernetes.io/name: kube-prometheus
+    app.kubernetes.io/part-of: kube-prometheus
+    prometheus: k8s
+    role: alert-rules
+  name: kubesphere
+  namespace: kubesphere-monitoring-system
+spec:
+  groups:
+  - name: ks-apiserver
+    rules:
+    - alert: ksApiSlow
+      annotations:
+        message: 99th percentile of requests is {{ $value }}s on ks-apiserver instance {{ $labels.instance }} for {{ $labels.verb }} {{ $labels.resource }}.{{ $labels.group }}/{{ $labels.version }}
+        summary: ks-apiserver requests are slow.
+      expr: |
+        histogram_quantile(0.99, sum by(instance,group,resource,verb,version,le,cluster) (rate(ks_server_request_duration_seconds_bucket{group!="terminal.kubesphere.io", job="ks-apiserver"}[5m]))) > 5
+      for: 10m
+      labels:
+        severity: critical
+    - alert: ksApiserverDown
+      annotations:
+        description: ksApiserver has disappeared from Prometheus target discovery.
+        summary: Target disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{job="ks-apiserver"} == 1)
+      for: 15m
+      labels:
+        severity: critical
+  - name: ks-controller-manager
+    rules:
+    - alert: ksControllerManagerDown
+      annotations:
+        description: ksControllerManager has disappeared from Prometheus target discovery.
+        summary: Target disappeared from Prometheus target discovery.
+      expr: |
+        absent(up{job="ks-controller-manager"} == 1)
+      for: 15m
+      labels:
+        severity: critical

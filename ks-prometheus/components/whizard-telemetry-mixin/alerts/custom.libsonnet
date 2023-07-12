@@ -1,0 +1,9 @@
+{
+  _config+:: {
+  },
+
+  prometheusAlerts+:: {
+    groups+: [
+    ],
+  },
+}

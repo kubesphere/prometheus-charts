@@ -1,10 +1,10 @@
 {{- /*
-Generated from 'apiserver.rules' group from https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kubernetes/kubernetes-prometheusRule.yaml
+Generated from 'apiserver.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
 {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
-{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.apiserver }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
@@ -31,8 +31,6 @@ spec:
   groups:
   - name: apiserver.rules
     rules:
-    - expr: sum by(cluster) (up{job="apiserver"} == 1)
-      record: apiserver:up:sum
     - expr: sum by(cluster) (irate(apiserver_request_total{job="apiserver"}[5m]))
       record: apiserver:apiserver_request_total:sum_irate
     - expr: sum(irate(apiserver_request_total{job="apiserver"}[5m])) by (verb, cluster)
