@@ -15,10 +15,6 @@ local kp =
       common+: {
         namespace: 'kubesphere-monitoring-system',
         platform:  'whizardTelemetry',
-        versions+:: (import './versions.json'),
-        images+:: {
-          thanos: 'thanosio/thanos:v' + $.values.common.versions.thanos,
-        },
       },
     },
   };
