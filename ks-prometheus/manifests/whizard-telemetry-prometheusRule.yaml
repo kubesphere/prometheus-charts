@@ -10,7 +10,7 @@ metadata:
   namespace: kubesphere-monitoring-system
 spec:
   groups:
-  - name: whizard-telemetry-custom.rules
+  - name: whizard-telemetry-cluster-recording.rules
     rules:
     - expr: |
         max by (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
@@ -111,7 +111,7 @@ spec:
     - expr: |
         sum by (node, cluster)(node_filesystem_files{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"} - node_filesystem_files_free{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"}) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
       record: node:node_inodes_used_total:sum
-  - name: apiserver.rules
+  - name: whizard-telemetry-apiserver-recording.rules
     rules:
     - expr: |
         sum by(cluster) (irate(apiserver_request_total{job="apiserver"}[5m]))

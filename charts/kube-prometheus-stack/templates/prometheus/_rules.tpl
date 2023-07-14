@@ -4,9 +4,7 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 */ -}}
 {{- define "rules.names" }}
 rules:
-  - "alertmanager.rules"
   - "config-reloaders"
-  - "etcd"
   - "general.rules"
   - "k8s.rules"
   - "kube-apiserver-availability.rules"
@@ -31,10 +29,7 @@ rules:
   - "node-exporter"
   - "node.rules"
   - "node-network"
-  - "prometheus-operator"
-  - "prometheus"
-  - "whizard-telemetry-custom.rules"
-  - "whizard-telemetry-node-recorinding.rules"
-  - "ks-apiserver"
-  - "ks-controller-manager"
+  - "whizard-telemetry-apiserver-recording.rules"
+  - "whizard-telemetry-cluster-recording.rules"
+  - "whizard-telemetry-node-recording.rules"
 {{- end }}

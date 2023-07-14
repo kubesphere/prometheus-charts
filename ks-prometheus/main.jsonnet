@@ -46,13 +46,11 @@ local kp =
 */
 
 { 'grafana-dashboardDefinitions': kp.grafana.dashboardDefinitions } + 
-{ 'prometheus-operator-prometheusRule': kp.prometheusOperator.prometheusRule } +
+// { 'prometheus-operator-prometheusRule': kp.prometheusOperator.prometheusRule } +
 { 'kube-prometheus-prometheusRule': kp.kubePrometheus.prometheusRule } +
-{ 'alertmanager-prometheusRule': kp.alertmanager.prometheusRule } +
+// { 'alertmanager-prometheusRule': kp.alertmanager.prometheusRule } +
 { 'kube-state-metrics-prometheusRule': kp.kubeStateMetrics.prometheusRule } + 
 { 'kubernetes-prometheusRule': kp.kubernetesControlPlane.prometheusRule } +
 { 'node-exporter-prometheusRule': kp.nodeExporter.prometheusRule } +
-{ 'prometheus-prometheusRule': kp.prometheus.prometheusRule }+
-{ 'kubesphere-prometheusRule': kp.whizardTelemetry.kubesphere.prometheusRule}
-{ 'etcd-prometheusRule': kp.whizardTelemetry.etcd.prometheusRule } +
+// { 'prometheus-prometheusRule': kp.prometheus.prometheusRule }+
 { 'whizard-telemetry-prometheusRule': kp.whizardTelemetry.prometheusRule} 

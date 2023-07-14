@@ -14,7 +14,7 @@
   prometheusRules+:: {
     groups+: [
       {
-        name: 'whizard-telemetry-custom.rules',
+        name: 'whizard-telemetry-cluster-recording.rules',
         rules: [
           {
             // pod attribute tuple tuple (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, node_role, host_ip) ==> 1
@@ -184,7 +184,7 @@
         ],
       },
       {
-        name: 'apiserver.rules',
+        name: 'whizard-telemetry-apiserver-recording.rules',
         rules: [
           {
             record: 'apiserver:apiserver_request_total:sum_irate',

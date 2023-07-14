@@ -1,5 +1,5 @@
 {{- /*
-Generated from 'whizard-telemetry-custom.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
+Generated from 'whizard-telemetry-cluster-recording.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
@@ -9,9 +9,9 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   {{- if .Values.heritageNameOverride }}
-  name: {{ print "whizard-telemetry-custom.rules" | replace "_" "-" | trunc 63 | trimSuffix "-" }}
+  name: {{ print "whizard-telemetry-cluster-recording.rules" | replace "_" "-" | trunc 63 | trimSuffix "-" }}
   {{- else }}
-  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-telemetry-custom.rules" | trunc 63 | trimSuffix "-" }}
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-telemetry-cluster-recording.rules" | trunc 63 | trimSuffix "-" }}
   {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
@@ -29,7 +29,7 @@ metadata:
 {{- end }}
 spec:
   groups:
-  - name: whizard-telemetry-custom.rules
+  - name: whizard-telemetry-cluster-recording.rules
     rules:
     - expr: |-
         max by (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (

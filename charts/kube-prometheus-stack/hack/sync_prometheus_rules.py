@@ -69,16 +69,16 @@ charts = [
     #     'is_mixin': True
     # },
 
-   {
-        'source': 'file://../../../ks-prometheus/manifests/alertmanager-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
-    {
-        'source': 'file://../../../ks-prometheus/manifests/etcd-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
+    # { 
+    #     'source': 'file://../../../ks-prometheus/manifests/alertmanager-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'file://../../../ks-prometheus/manifests/etcd-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
     {
         'source': 'file://../../../ks-prometheus/manifests/kube-prometheus-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
@@ -94,26 +94,26 @@ charts = [
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
     },
-    {
-        'source': 'file://../../../ks-prometheus/manifests/kubesphere-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },    
+    # {
+    #     'source': 'file://../../../ks-prometheus/manifests/kubesphere-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },    
     {
         'source': 'file://../../../ks-prometheus/manifests/node-exporter-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
     },
-    {
-        'source': 'file://../../../ks-prometheus/manifests/prometheus-operator-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
-    {
-        'source': 'file://../../../ks-prometheus/manifests/prometheus-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
+    # {
+    #     'source': 'file://../../../ks-prometheus/manifests/prometheus-operator-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'file://../../../ks-prometheus/manifests/prometheus-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
     {
         'source': 'file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
@@ -123,9 +123,9 @@ charts = [
 
 # Additional conditions map
 condition_map = {
-    'alertmanager.rules': ' .Values.defaultRules.rules.alertmanager',
+   # 'alertmanager.rules': ' .Values.defaultRules.rules.alertmanager',
     'config-reloaders': ' .Values.defaultRules.rules.configReloaders',
-    'etcd': ' .Values.kubeEtcd.enabled .Values.defaultRules.rules.etcd',
+   # 'etcd': ' .Values.kubeEtcd.enabled .Values.defaultRules.rules.etcd',
     'general.rules': ' .Values.defaultRules.rules.general',
     'k8s.rules': ' .Values.defaultRules.rules.k8s',
     'kube-apiserver-availability.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverAvailability',
@@ -150,14 +150,13 @@ condition_map = {
     'node-exporter': ' .Values.defaultRules.rules.nodeExporterAlerting',
     'node.rules': ' .Values.defaultRules.rules.node',
     'node-network': ' .Values.defaultRules.rules.network',
-    'prometheus-operator': ' .Values.defaultRules.rules.prometheusOperator',
-    'prometheus': ' .Values.defaultRules.rules.prometheus', # kube-prometheus >= 1.14 uses prometheus as group instead of prometheus.rules
+   # 'prometheus-operator': ' .Values.defaultRules.rules.prometheusOperator',
+   # 'prometheus': ' .Values.defaultRules.rules.prometheus', # kube-prometheus >= 1.14 uses prometheus as group instead of prometheus.rules
 
     # custom rules
-    'whizard-telemetry-custom.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-telemetry-node-recorinding.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'ks-apiserver': ' .Values.defaultRules.rules.kubesphere',
-    'ks-controller-manager': ' .Values.defaultRules.rules.kubesphere',
+    'whizard-telemetry-apiserver-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-cluster-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-node-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
 }
 
 alert_condition_map = {
