@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Fetch alerting and aggregation rules from provided urls into this chart."""
 import json
-import os
 import re
 import textwrap
 from os import makedirs
@@ -9,7 +8,6 @@ from os import makedirs
 import _jsonnet
 import requests
 import yaml
-from requests_file import FileAdapter
 from yaml.representer import SafeRepresenter
 
 
@@ -28,82 +26,107 @@ def change_style(style, representer):
 
 
 # Source files list
-#
-# Comment the alerting rules which have been migrated to Whizard Alert Extension
 charts = [
     # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/alertmanager/alertmanager-alertRuleGroups.yaml',
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/alertmanager-prometheusRule.yaml',
     #     'destination': '../templates/prometheus/rules-1.14',
     #     'min_kubernetes': '1.14.0-0'
     # },
     # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kube-prometheus/kube-prometheus-alertRuleGroups.yaml',
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubePrometheus-prometheusRule.yaml',
     #     'destination': '../templates/prometheus/rules-1.14',
     #     'min_kubernetes': '1.14.0-0'
     # },
     # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kubernetes/kubernetes-alertRuleGroups.yaml',
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubernetesControlPlane-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubeStateMetrics-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/nodeExporter-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/prometheus-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/prometheusOperator-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/etcd-io/etcd/main/contrib/mixin/mixin.libsonnet',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0',
+    #     'is_mixin': True
+    # },
+
+    # { 
+    #     'source': 'file://../../../ks-prometheus/manifests/alertmanager-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'file://../../../ks-prometheus/manifests/etcd-prometheusRule.yaml',
     #     'destination': '../templates/prometheus/rules-1.14',
     #     'min_kubernetes': '1.14.0-0'
     # },
     {
-        'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kubernetes/kubernetes-prometheusRule.yaml',
+        'source': 'file://../../../ks-prometheus/manifests/kube-prometheus-prometheusRule.yaml',
+        'destination': '../templates/prometheus/rules-1.14',
+        'min_kubernetes': '1.14.0-0'
+    },
+    {
+        'source': 'file://../../../ks-prometheus/manifests/kube-state-metrics-prometheusRule.yaml',
+        'destination': '../templates/prometheus/rules-1.14',
+        'min_kubernetes': '1.14.0-0'
+    },
+    {
+        'source': 'file://../../../ks-prometheus/manifests/kubernetes-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
     },
     # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kube-state-metrics/kube-state-metrics-alertRuleGroups.yaml',
+    #     'source': 'file://../../../ks-prometheus/manifests/kubesphere-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },    
+    {
+        'source': 'file://../../../ks-prometheus/manifests/node-exporter-prometheusRule.yaml',
+        'destination': '../templates/prometheus/rules-1.14',
+        'min_kubernetes': '1.14.0-0'
+    },
+    # {
+    #     'source': 'file://../../../ks-prometheus/manifests/prometheus-operator-prometheusRule.yaml',
     #     'destination': '../templates/prometheus/rules-1.14',
     #     'min_kubernetes': '1.14.0-0'
     # },
     # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/node-exporter/node-exporter-alertRuleGroups.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/prometheus/prometheus-alertRuleGroups.yaml',
+    #     'source': 'file://../../../ks-prometheus/manifests/prometheus-prometheusRule.yaml',
     #     'destination': '../templates/prometheus/rules-1.14',
     #     'min_kubernetes': '1.14.0-0'
     # },
     {
-        'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/prometheus/prometheus-prometheusRule.yaml',
+        'source': 'file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
     },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/prometheus-operator/prometheus-operator-alertRuleGroups.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/thanos-ruler/thanos-ruler-alertRuleGroups.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    {
-        'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/etcd/prometheus-rulesEtcd.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/etcd/prometheus-alertRuleGroupsEtcd.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kubesphere/kubesphere-alertRuleGroups.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
 ]
 
 # Additional conditions map
 condition_map = {
-    # 'alertmanager-rules': ' .Values.defaultRules.rules.alertmanager',
-    # 'config-reloaders': ' .Values.defaultRules.rules.configReloaders',
-    'etcd': ' .Values.kubeEtcd.enabled .Values.defaultRules.rules.etcd',
-    # 'general-rules': ' .Values.defaultRules.rules.general',
+   # 'alertmanager.rules': ' .Values.defaultRules.rules.alertmanager',
+    'config-reloaders': ' .Values.defaultRules.rules.configReloaders',
+   # 'etcd': ' .Values.kubeEtcd.enabled .Values.defaultRules.rules.etcd',
+    'general.rules': ' .Values.defaultRules.rules.general',
     'k8s.rules': ' .Values.defaultRules.rules.k8s',
     'kube-apiserver-availability.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverAvailability',
     'kube-apiserver-burnrate.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverBurnrate',
@@ -112,36 +135,28 @@ condition_map = {
     'kube-prometheus-general.rules': ' .Values.defaultRules.rules.kubePrometheusGeneral',
     'kube-prometheus-node-recording.rules': ' .Values.defaultRules.rules.kubePrometheusNodeRecording',
     'kube-scheduler.rules': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerRecording',
-    # 'kube-state-metrics': ' .Values.defaultRules.rules.kubeStateMetrics',
+    'kube-state-metrics': ' .Values.defaultRules.rules.kubeStateMetrics',
     'kubelet.rules': ' .Values.kubelet.enabled .Values.defaultRules.rules.kubelet',
-    # 'kubernetes-apps': ' .Values.defaultRules.rules.kubernetesApps',
-    # 'kubernetes-resources': ' .Values.defaultRules.rules.kubernetesResources',
-    # 'kubernetes-storage': ' .Values.defaultRules.rules.kubernetesStorage',
-    # 'kubernetes-system': ' .Values.defaultRules.rules.kubernetesSystem',
-    # 'kubernetes-system-kube-proxy': ' .Values.kubeProxy.enabled .Values.defaultRules.rules.kubeProxy',
-    # 'kubernetes-system-apiserver': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-apiserver
-    # 'kubernetes-system-kubelet': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-kubelet
-    # 'kubernetes-system-controller-manager': ' .Values.kubeControllerManager.enabled .Values.defaultRules.rules.kubeControllerManager',
-    # 'kubernetes-system-scheduler': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerAlerting',
+    'kubernetes-apps': ' .Values.defaultRules.rules.kubernetesApps',
+    'kubernetes-resources': ' .Values.defaultRules.rules.kubernetesResources',
+    'kubernetes-storage': ' .Values.defaultRules.rules.kubernetesStorage',
+    'kubernetes-system': ' .Values.defaultRules.rules.kubernetesSystem',
+    'kubernetes-system-kube-proxy': ' .Values.kubeProxy.enabled .Values.defaultRules.rules.kubeProxy',
+    'kubernetes-system-apiserver': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-apiserver
+    'kubernetes-system-kubelet': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-kubelet
+    'kubernetes-system-controller-manager': ' .Values.kubeControllerManager.enabled .Values.defaultRules.rules.kubeControllerManager',
+    'kubernetes-system-scheduler': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerAlerting',
     'node-exporter.rules': ' .Values.defaultRules.rules.nodeExporterRecording',
-    # 'node-exporter': ' .Values.defaultRules.rules.nodeExporterAlerting',
+    'node-exporter': ' .Values.defaultRules.rules.nodeExporterAlerting',
     'node.rules': ' .Values.defaultRules.rules.node',
-    # 'node-network': ' .Values.defaultRules.rules.network',
-    # 'prometheus-operator': ' .Values.defaultRules.rules.prometheusOperator',
-    'prometheus': ' .Values.defaultRules.rules.prometheus', # kube-prometheus >= 1.14 uses prometheus as group instead of prometheus.rules
+    'node-network': ' .Values.defaultRules.rules.network',
+   # 'prometheus-operator': ' .Values.defaultRules.rules.prometheusOperator',
+   # 'prometheus': ' .Values.defaultRules.rules.prometheus', # kube-prometheus >= 1.14 uses prometheus as group instead of prometheus.rules
 
-    'etcd.rules': ' .Values.defaultRules.rules.etcd',
-    'etcd_histogram.rules': ' .Values.defaultRules.rules.etcd',
-    'cluster.rules': ' .Values.defaultRules.rules.cluster',
-    'namespace.rules': ' .Values.defaultRules.rules.namespace',
-    'apiserver.rules': ' .Values.defaultRules.rules.apiserver',
-    'controller_manager.rules': ' .Values.defaultRules.rules.kubeControllerManager',
-    'scheduler.rules': ' .Values.defaultRules.rules.kubeSchedulerRecording',
-    'scheduler_histogram.rules': ' .Values.defaultRules.rules.KubeSchedulerRecording',
-    'coredns.rules': ' .Values.defaultRules.rules.coreDns',
-    'prometheus.rules': ' .Values.defaultRules.rules.prometheus',
-    # 'ks-apiserver': ' .Values.defaultRules.rules.ksAPiserver',
-    # 'ks-controller-manager': ' .Values.defaultRules.rules.ksControllerManager',
+    # custom rules
+    'whizard-telemetry-apiserver-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-cluster-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-node-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
 }
 
 alert_condition_map = {
@@ -181,13 +196,12 @@ replacement_map = {
         'replacement': 'job="kubelet", namespace=~"{{ $targetNamespace }}"',
         'limitGroup': ['kubernetes-storage'],
         'init': '{{- $targetNamespace := .Values.defaultRules.appNamespacesTarget }}'},
-    'runbook_url: https://alert-runbooks.kubesphere.io/runbooks/': {
+    'runbook_url: https://runbooks.prometheus-operator.dev/runbooks/': {
         'replacement': 'runbook_url: {{ .Values.defaultRules.runbookUrl }}/',
         'init': ''},
-    
-    'namespace="kubesphere-monitoring-system"': {
-        'replacement': 'namespace="{{ $namespace }}"',
-        'init': '{{- $namespace := printf "%s" (include "kube-prometheus-stack.namespace" .) }}'},
+    '(namespace,service)': {
+        'replacement': '(namespace,service,cluster)',
+        'init': ''}
 }
 
 # standard header
@@ -224,36 +238,6 @@ spec:
   groups:
   -'''
 
-# standard header for GlobalRuleGroup
-grg_header = '''{{- /*
-Generated from '%(name)s' group from %(url)s
-Do not change in-place! In order to change this file first read following link:
-https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
-*/ -}}
-{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
-{{- if and (semverCompare ">=%(min_kubernetes)s" $kubeTargetVersion) (semverCompare "<%(max_kubernetes)s" $kubeTargetVersion) .Values.defaultRules.create%(condition)s }}%(init_line)s
-apiVersion: alerting.kubesphere.io/v2beta1
-kind: GlobalRuleGroup
-metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: %(name)s
-  {{- else }}
-  name: {{ printf "%%s-%%s" (include "kube-prometheus-stack.fullname" .) "%(name)s" | trunc 63 | trimSuffix "-" }}
-  {{- end }}
-  labels:
-    app: {{ template "kube-prometheus-stack.name" . }}
-    alerting.kubesphere.io/builtin: "true"
-    alerting.kubesphere.io/enable: "true"
-{{- include "kube-prometheus-stack.labels" . | indent 4 }}
-{{- if .Values.defaultRules.labels }}
-{{ toYaml .Values.defaultRules.labels | indent 4 }}
-{{- end }}
-{{- if .Values.defaultRules.annotations }}
-  annotations:
-{{ toYaml .Values.defaultRules.annotations | indent 4 }}
-{{- end }}
-spec:
-'''
 
 def init_yaml_styles():
     represent_literal_str = change_style('|', SafeRepresenter.represent_str)
@@ -285,17 +269,16 @@ def yaml_str_repr(struct, indent=4):
     text = textwrap.indent(text, ' ' * indent)[indent - 1:]  # indent everything, and remove very first line extra indentation
     return text
 
-# for GlobalRuleGroup
-def grg_yaml_str_repr(struct, indent=2):
-    """represent yaml as a string"""
-    text = yaml.dump(
-        struct,
-        width=1000,  # to disable line wrapping
-        default_flow_style=False  # to disable multiple items on single line
-    )
-    text = escape(text)  # escape {{ and }} for helm
-    text = textwrap.indent(text, ' ' * indent)  # indent everything
-    return text
+
+def get_rule_group_condition(group_name, value_key):
+    if group_name == '':
+        return ''
+
+    if group_name.count(".Values") > 1:
+        group_name = group_name.split(' ')[-1]
+
+    return group_name.replace('Values.defaultRules.rules', f"Values.defaultRules.{value_key}").strip()
+
 
 def add_rules_conditions(rules, rules_map, indent=4):
     """Add if wrapper for rules, listed in rules_map"""
@@ -354,65 +337,73 @@ def add_rules_per_rule_conditions(rules, group, indent=4):
     return rules
 
 
-def add_custom_labels(rules, indent=4):
+def add_custom_labels(rules_str, group, indent=4, label_indent=2):
     """Add if wrapper for additional rules labels"""
-    rule_condition = '{{- if .Values.defaultRules.additionalRuleLabels }}\n{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 8 }}\n{{- end }}'
-    rule_condition_len = len(rule_condition) + 1
+    rule_group_labels = get_rule_group_condition(condition_map.get(group['name'], ''), 'additionalRuleGroupLabels')
 
-    separator = " " * indent + "- alert:.*"
-    alerts_positions = re.finditer(separator,rules)
-    alert=-1
-    for alert_position in alerts_positions:
-        # add rule_condition at the end of the alert block
-        if alert >= 0 :
-            index = alert_position.start() + rule_condition_len * alert - 1
-            rules = rules[:index] + "\n" + rule_condition + rules[index:]
-        alert += 1
+    additional_rule_labels = textwrap.indent("""
+{{- with .Values.defaultRules.additionalRuleLabels }}
+  {{- toYaml . | nindent 8 }}
+{{- end }}
+{{- with %s }}
+  {{- toYaml . | nindent 8 }}
+{{- end }}""" % (rule_group_labels,), " " * (indent + label_indent * 2))
 
-    # add rule_condition at the end of the last alert
-    if alert >= 0:
-        index = len(rules) - 1
-        rules = rules[:index] + "\n" + rule_condition + rules[index:]
-    return rules
+    additional_rule_labels_condition_start = "\n" + " " * (indent + label_indent) + '{{- if or .Values.defaultRules.additionalRuleLabels %s }}' % (rule_group_labels,)
+    additional_rule_labels_condition_end = "\n" + " " * (indent + label_indent) + '{{- end }}'
+    # labels: cannot be null, if a rule does not have any labels by default, the labels block
+    # should only be added if there are .Values defaultRules.additionalRuleLabels defined
+    rule_seperator = "\n" + " " * indent + "-.*"
+    label_seperator = "\n" + " " * indent + "  labels:"
+    section_seperator = "\n" + " " * indent + "  \S"
+    section_seperator_len = len(section_seperator)-1
+    rules_positions = re.finditer(rule_seperator,rules_str)
 
-# for GlobalRuleGroup
-def grg_add_custom_labels(rules, indent=2):
-    """Add if wrapper for additional rules labels"""
-    rule_condition = '{{- if .Values.defaultRules.additionalRuleLabels }}\n{{ toYaml .Values.defaultRules.additionalRuleLabels | indent 6 }}\n{{- end }}'
-    labels = " " * indent + "  labels:"
-    labels_len = len(labels) + 1
-    rule_condition_len = len(rule_condition) + 1
+    # fetch breakpoint between each set of rules
+    ruleStartingLine = [(rule_position.start(),rule_position.end()) for rule_position in rules_positions]
+    head = rules_str[:ruleStartingLine[0][0]]
 
-    separator = " " * indent + "- alert:.*"
-    alerts_positions = re.finditer(separator,rules)
-    alert=-1
-    start=0
+    # construct array of rules so they can be handled individually
+    rules = []
+    # pylint: disable=E1136
+    # See https://github.com/pylint-dev/pylint/issues/1498 for None Values
+    previousRule = None
+    for r in ruleStartingLine:
+         if previousRule != None:
+             rules.append(rules_str[previousRule[0]:r[0]])
+         previousRule = r
+    rules.append(rules_str[previousRule[0]:len(rules_str)-1])
 
-    for alert_position in alerts_positions:
-        # add rule_condition after 'labels:' statement
-        if alert >= 0:
-            end = alert_position.start() + rule_condition_len * alert
-            idx = rules[start:end].find(labels)
-            index = start + idx + labels_len - 1
-            rules = rules[:index] + "\n" + rule_condition + rules[index:]
-        
-        alert += 1
-        start = alert_position.start() + rule_condition_len * alert
-    
-    # add rule_condition after 'labels:' statement of the last alert
-    if alert >= 0:
-        idx = rules[start:].find(labels)
-        index = start + idx + labels_len - 1
-        rules = rules[:index] + "\n" + rule_condition + rules[index:]
+    for i, rule in enumerate(rules):
+        current_label = re.search(label_seperator,rule)
+        if current_label:
+            # `labels:` block exists
+            # determine if there are any existing entries
+            entries = re.search(section_seperator,rule[current_label.end():])
+            if entries:
+                entries_start = current_label.end()
+                entries_end = entries.end()+current_label.end()-section_seperator_len
+                rules[i] = rule[:entries_end] + additional_rule_labels_condition_start + additional_rule_labels + additional_rule_labels_condition_end + rule[entries_end:]
+            else:
+                # `labels:` does not contain any entries
+                # append template to label section
+                rules[i] += additional_rule_labels_condition_start + additional_rule_labels + additional_rule_labels_condition_end
+        else:
+            # `labels:` block does not exist
+            # create it and append template
+            rules[i] += additional_rule_labels_condition_start + "\n" + " " * indent + "  labels:" + additional_rule_labels + additional_rule_labels_condition_end
+    return head + "".join(rules) + "\n"
 
-    return rules
 
-def add_custom_annotations(rules, indent=4):
+def add_custom_annotations(rules, group, indent=4):
     """Add if wrapper for additional rules annotations"""
     rule_condition = '{{- if .Values.defaultRules.additionalRuleAnnotations }}\n{{ toYaml .Values.defaultRules.additionalRuleAnnotations | indent 8 }}\n{{- end }}'
+    rule_group_labels = get_rule_group_condition(condition_map.get(group['name'], ''), 'additionalRuleGroupAnnotations')
+    rule_group_condition = '\n{{- if %s }}\n{{ toYaml %s | indent 8 }}\n{{- end }}' % (rule_group_labels, rule_group_labels)
     annotations = "      annotations:"
     annotations_len = len(annotations) + 1
     rule_condition_len = len(rule_condition) + 1
+    rule_group_condition_len = len(rule_group_condition)
 
     separator = " " * indent + "- alert:.*"
     alerts_positions = re.finditer(separator,rules)
@@ -420,27 +411,8 @@ def add_custom_annotations(rules, indent=4):
 
     for alert_position in alerts_positions:
         # Add rule_condition after 'annotations:' statement
-        index = alert_position.end() + annotations_len + rule_condition_len * alert
-        rules = rules[:index] + "\n" + rule_condition + rules[index:]
-        alert += 1
-
-    return rules
-
-def grg_add_custom_annotations(rules, indent=2):
-    """Add if wrapper for additional rules annotations"""
-    rule_condition = '{{- if .Values.defaultRules.additionalRuleAnnotations }}\n{{ toYaml .Values.defaultRules.additionalRuleAnnotations | indent 6 }}\n{{- end }}'
-    annotations = " " * indent + "  annotations:"
-    annotations_len = len(annotations) + 1
-    rule_condition_len = len(rule_condition) + 1
-
-    separator = " " * indent + "- alert:.*"
-    alerts_positions = re.finditer(separator,rules)
-    alert = 0
-
-    for alert_position in alerts_positions:
-        # Add rule_condition after 'annotations:' statement
-        index = alert_position.end() + annotations_len + rule_condition_len * alert
-        rules = rules[:index] + "\n" + rule_condition + rules[index:]
+        index = alert_position.end() + annotations_len + (rule_condition_len + rule_group_condition_len) * alert
+        rules = rules[:index] + "\n" + rule_condition + rule_group_condition +  rules[index:]
         alert += 1
 
     return rules
@@ -459,8 +431,8 @@ def write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes)
             if replacement_map[line]['init']:
                 init_line += '\n' + replacement_map[line]['init']
     # append per-alert rules
-    rules = add_custom_labels(rules)
-    rules = add_custom_annotations(rules)
+    # rules = add_custom_labels(rules, group)
+    # rules = add_custom_annotations(rules, group)
     rules = add_rules_conditions_from_condition_map(rules)
     rules = add_rules_per_rule_conditions(rules, group)
     # initialize header
@@ -479,55 +451,10 @@ def write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes)
     # footer
     lines += '{{- end }}'
 
+    for rule in group['rules']:
+        if 'alert' in rule:
+            return 
     filename = group['name'] + '.yaml'
-    new_filename = "%s/%s" % (destination, filename)
-
-    # make sure directories to store the file exist
-    makedirs(destination, exist_ok=True)
-
-    # recreate the file
-    with open(new_filename, 'w') as f:
-        f.write(lines)
-
-    print("Generated %s" % new_filename)
-
-# write GlobalRuleGroup
-def grg_write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes):
-    fix_expr(group['spec']['rules'])
-    group_name = group['metadata']['name']
-
-    # prepare rules string representation
-    rules = grg_yaml_str_repr(group['spec'])
-    # add replacements of custom variables and include their initialisation in case it's needed
-    init_line = ''
-    for line in replacement_map:
-        if group_name in replacement_map[line].get('limitGroup', [group_name]) and line in rules:
-            rules = rules.replace(line, replacement_map[line]['replacement'])
-            if replacement_map[line]['init']:
-                init_line += '\n' + replacement_map[line]['init']
-
-    # append per-alert rules
-    rules = grg_add_custom_labels(rules)
-    rules = grg_add_custom_annotations(rules)
-    rules = add_rules_conditions_from_condition_map(rules)
-    rules = add_rules_per_rule_conditions(rules, group['spec'])
-    # initialize header
-    lines = grg_header % {
-        'name': group['metadata']['name'],
-        'url': url,
-        'condition': condition_map.get(group['metadata']['name'], ''),
-        'init_line': init_line,
-        'min_kubernetes': min_kubernetes,
-        'max_kubernetes': max_kubernetes
-    }
-
-    # rules themselves
-    lines += rules
-
-    # footer
-    lines += '{{- end }}'
-
-    filename = group['metadata']['name'] + '.yaml'
     new_filename = "%s/%s" % (destination, filename)
 
     # make sure directories to store the file exist
@@ -553,29 +480,19 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 
 def main():
     init_yaml_styles()
-
-    session = requests.Session()
-    manifests_dir = os.getenv("MANIFESTS_DIR")
-    if manifests_dir != None:
-        # just for test
-        session.mount('file://', FileAdapter())
-        manifests_dir= manifests_dir.strip("/")
-        for chart in charts: 
-            chart['source'] = chart['source'].replace('https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests', 'file:///'+manifests_dir)
-    else:
-        token = os.getenv('GITHUB_TOKEN')
-        if token != None:
-            session.headers.update({'Authorization': 'token {}'.format(token)})
-
     # read the rules, create a new template file per group
     for chart in charts:
         print("Generating rules from %s" % chart['source'])
 
-        response = session.get(chart['source'])
-        if response.status_code != 200:
-            print('Skipping the file, response code %s not equals 200' % response.status_code)
-            continue
-        raw_text = response.text
+        if chart['source'].startswith("file://"):
+            f = open(chart['source'][7:])
+            raw_text = f.read()
+        else:
+            response = requests.get(chart['source'])
+            if response.status_code != 200:
+                print('Skipping the file, response code %s not equals 200' % response.status_code)
+                continue
+            raw_text = response.text
         if chart.get('is_mixin'):
             alerts = json.loads(_jsonnet.evaluate_snippet(chart['source'], raw_text + '.prometheusAlerts'))
         else:
@@ -584,18 +501,10 @@ def main():
         if ('max_kubernetes' not in chart):
             chart['max_kubernetes']="9.9.9-9"
 
-        if alerts['kind'] == 'PrometheusRule':
-            # etcd workaround, their file don't have spec level
-            groups = alerts['spec']['groups'] if alerts.get('spec') else alerts['groups']
-            for group in groups:
-                write_group_to_file(group, chart['source'], chart['destination'], chart['min_kubernetes'], chart['max_kubernetes'])
-        
-        # Comment because the alerting rules which have been migrated to Whizard Alert Extension
-        #
-        # if alerts['kind'] == 'List':
-        #     for group in alerts['items']:
-        #         if group['kind'] == 'GlobalRuleGroup':
-        #             grg_write_group_to_file(group, chart['source'], chart['destination'], chart['min_kubernetes'], chart['max_kubernetes'])
+        # etcd workaround, their file don't have spec level
+        groups = alerts['spec']['groups'] if alerts.get('spec') else alerts['groups']
+        for group in groups:
+            write_group_to_file(group, chart['source'], chart['destination'], chart['min_kubernetes'], chart['max_kubernetes'])
 
     # write rules.names named template
     write_rules_names_template()

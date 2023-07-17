@@ -1,17 +1,17 @@
 {{- /*
-Generated from 'apiserver.rules' group from https://raw.githubusercontent.com/WhizardTelemetry/kse-prometheus/kse/manifests/kubernetes/kubernetes-prometheusRule.yaml
+Generated from 'whizard-telemetry-apiserver-recording.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
 {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
-{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.apiserver }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.whizardTelemetry }}
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   {{- if .Values.heritageNameOverride }}
-  name: {{ print "apiserver.rules" | replace "_" "-" | trunc 63 | trimSuffix "-" }}
+  name: {{ print "whizard-telemetry-apiserver-recording.rules" | replace "_" "-" | trunc 63 | trimSuffix "-" }}
   {{- else }}
-  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "apiserver.rules" | trunc 63 | trimSuffix "-" }}
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-telemetry-apiserver-recording.rules" | trunc 63 | trimSuffix "-" }}
   {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
@@ -29,10 +29,8 @@ metadata:
 {{- end }}
 spec:
   groups:
-  - name: apiserver.rules
+  - name: whizard-telemetry-apiserver-recording.rules
     rules:
-    - expr: sum by(cluster) (up{job="apiserver"} == 1)
-      record: apiserver:up:sum
     - expr: sum by(cluster) (irate(apiserver_request_total{job="apiserver"}[5m]))
       record: apiserver:apiserver_request_total:sum_irate
     - expr: sum(irate(apiserver_request_total{job="apiserver"}[5m])) by (verb, cluster)

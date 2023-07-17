@@ -2,3 +2,5 @@
 /charts/*/charts
 .idea
 .vscode
+ks-prometheus/jsonnetfile.lock.json
+ks-prometheus/vendor/
