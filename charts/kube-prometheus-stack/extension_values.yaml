@@ -1,0 +1,54 @@
+global:
+  ## Global image registry to use if it needs to be overriden for some specific use cases (e.g local registries, custom images, ...)
+  ##
+  imageRegistry: ""
+
+  ## Reference to one or more secrets to be used when pulling images
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+  ##
+  imagePullSecrets: []
+  # - name: "image-pull-secret"
+  # or
+  # - "image-pull-secret"
+
+namespaceOverride: kubesphere-monitoring-system
+
+
+
+kube-state-metrics:
+  image:
+    registry: registry.k8s.io
+    repository: kube-state-metrics/kube-state-metrics
+    tag: v2.8.2
+  kubeRBACProxy:
+    image:
+      registry: quay.io
+      repository: brancz/kube-rbac-proxy
+      tag: v0.14.0
+
+
+prometheus-node-exporter:
+  image:
+    registry: quay.io
+    repository: prometheus/node-exporter
+    tag: ""
+  kubeRBACProxy:
+    image:
+      registry: quay.io
+      repository: brancz/kube-rbac-proxy
+      tag: v0.14.0
+
+grafana:
+  enabled: false
+  # grafana does not support the global.imageRegistry
+  image:
+    repository: grafana/grafana
+    tag: ""
+  sidecar:
+    image:
+      repository: quay.io/kiwigrid/k8s-sidecar
+      tag: 1.21.0
+  initChownData:
+    image:
+      repository: busybox
+      tag: "1.31.1"

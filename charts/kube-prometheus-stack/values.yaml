@@ -744,6 +744,8 @@ alertmanager:
 grafana:
   enabled: false
   namespaceOverride: ""
+  nameOverride: "grafana"
+  fullnameOverride: "grafana"
 
   ## ForceDeployDatasources Create datasource configmap even if grafana deployment has been disabled
   ##
@@ -762,7 +764,7 @@ grafana:
   ##
   defaultDashboardsTimezone: utc
 
-  adminPassword: prom-operator
+  adminPassword: admin
 
   useStatefulSet: false
 
@@ -773,8 +775,8 @@ grafana:
 
   resources:
     limits:
-      cpu: 200m
-      memory: 200Mi
+      cpu: "1"
+      memory: 2Gi
     requests:
       cpu: 100m
       memory: 100Mi
@@ -836,9 +838,9 @@ grafana:
       annotations: {}
       multicluster:
         global:
-          enabled: false
+          enabled: true
         etcd:
-          enabled: false
+          enabled: true
       provider:
         allowUiUpdates: false
     datasources:
@@ -847,6 +849,7 @@ grafana:
 
       uid: prometheus
 
+      url: http://prometheus-operated.kubesphere-monitoring-system.svc:9090
       ## URL of prometheus datasource
       ##
       # url: http://prometheus-stack-prometheus:9090/
@@ -1610,10 +1613,9 @@ kube-state-metrics:
   namespaceOverride: ""
   nameOverride: "kube-state-metrics"
   fullnameOverride: "kube-state-metrics"
-  image:
-    repository: registry.k8s.io/kube-state-metrics/kube-state-metrics
-    tag: v2.6.0
-    pullPolicy: IfNotPresent
+
+  kubeRBACProxy:
+    enabled: true
 
   extraArgs:
     - --custom-resource-state-config
@@ -1637,24 +1639,13 @@ kube-state-metrics:
   rbac:
     create: true
     extraRules:
-    - apiGroups: [""]
-      resources: ["serviceaccounts"]
-      verbs: ["list", "watch"]
     - apiGroups: ["iam.kubesphere.io"]
       resources: ["users"]
       verbs: ["list", "watch"]
     - apiGroups: ["rbac.authorization.k8s.io"]
       resources: ["clusterrolebindings", "clusterroles", "rolebindings", "roles"]
       verbs: ["list", "watch"]
-    - apiGroups: ["coordination.k8s.io"]
-      resources: ["leases"]
-      verbs: ["list", "watch"]
-    - apiGroups: ["authentication.k8s.io"]
-      resources: ["tokenreviews"]
-      verbs: ["create"]
-    - apiGroups: ["authorization.k8s.io"]
-      resources: ["subjectaccessreviews"]
-      verbs: ["create"]
+
 
   releaseLabel: true
   nodeSelector:
@@ -1682,6 +1673,7 @@ kube-state-metrics:
     - kube_clusterrolebinding_info
   metricLabelsAllowlist:
     - namespaces=[kubesphere.io/workspace]
+    - storageclasses=[storage.kubesphere.io/storagetype]
   metricAnnotationsAllowList:
     - clusterroles=[kubesphere.io/creator]
   collectors:
@@ -1694,6 +1686,7 @@ kube-state-metrics:
     - horizontalpodautoscalers
     - ingresses
     - jobs
+    - leases
     - limitranges
     - mutatingwebhookconfigurations
     - namespaces
@@ -1717,18 +1710,28 @@ kube-state-metrics:
     - users
   resources:
     limits:
-      cpu: 100m
-      memory: 250Mi
+      cpu: "1"
+      memory: 4Gi
     requests:
       cpu: 10m
-      memory: 190Mi
+      memory: 32Mi
   prometheus:
     monitor:
       enabled: true
 
+      additionalLabels:
+        app.kubernetes.io/vendor: kubesphere
+
+      scheme: https
+
+      bearerTokenFile: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+
+      tlsConfig:
+        insecureSkipVerify: true
+
       ## Scrape interval. If not set, the Prometheus default scrape interval is used.
       ##
-      interval: ""
+      interval: "1m"
 
       ## Scrape Timeout. If not set, the Prometheus default scrape timeout is used.
       ##
@@ -1759,7 +1762,9 @@ kube-state-metrics:
       ## RelabelConfigs to apply to samples before scraping
       ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#relabelconfig
       ##
-      relabelings: []
+      relabelings:
+        - action: labeldrop
+          regex: (container|pod|service|endpoint|namespace)
       # - sourceLabels: [__meta_kubernetes_pod_node_name]
       #   separator: ;
       #   regex: ^(.*)$
@@ -1768,7 +1773,7 @@ kube-state-metrics:
       #   action: replace
 
   selfMonitor:
-    enabled: false
+    enabled: true
 
 ## Deploy node exporter as a daemonset to all nodes
 ##
@@ -3233,6 +3238,7 @@ prometheus:
   - apiGroups: [""]
     resources:
     - services/node-exporter
+    - services/kube-state-metrics
     verbs: ["get"]
 
   additionalServiceMonitors:
