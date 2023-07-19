@@ -34635,6 +34635,35 @@ entries:
     - https://prometheus-community.github.io/helm-charts/prometheus-nats-exporter-1.0.0.tgz
     version: 1.0.0
   prometheus-node-exporter:
+  - annotations:
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Chart Source
+          url: https://github.com/prometheus-community/helm-charts
+    apiVersion: v2
+    appVersion: 1.6.0
+    created: "2023-07-19T08:31:00.466495225Z"
+    description: A Helm chart for prometheus node-exporter
+    digest: d05a8c128f58f26d1b5b0d9a44219139a1a98daa85373ef4f25a3ebca367ebf6
+    home: https://github.com/prometheus/node_exporter/
+    keywords:
+    - node-exporter
+    - prometheus
+    - exporter
+    maintainers:
+    - email: gianrubio@gmail.com
+      name: gianrubio
+    - email: zanhsieh@gmail.com
+      name: zanhsieh
+    - email: rootsandtrees@posteo.de
+      name: zeritti
+    name: prometheus-node-exporter
+    sources:
+    - https://github.com/prometheus/node_exporter/
+    type: application
+    urls:
+    - https://github.com/WhizardTelemetry/prometheus-charts/releases/download/prometheus-node-exporter-4.20.0/prometheus-node-exporter-4.20.0.tgz
+    version: 4.20.0
   - apiVersion: v2
     appVersion: 1.5.0
     created: "2023-04-07T09:20:31.035444128Z"
@@ -51452,4 +51481,4 @@ entries:
     urls:
     - https://prometheus-community.github.io/helm-charts/prometheus-to-sd-0.1.0.tgz
     version: 0.1.0
-generated: "2023-07-17T06:46:51.287812835Z"
+generated: "2023-07-19T08:31:00.469675598Z"
