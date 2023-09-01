@@ -23,6 +23,12 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
+  {{-  if $.Values.kubeRBACProxy.enabled  }}
+    - port: {{ .Values.kubeRBACProxy.service.port }}
+      targetPort: {{ .Values.kubeRBACProxy.service.name }}
+      protocol: TCP
+      name: {{ .Values.kubeRBACProxy.service.name }}
+  {{- end }}
 {{- if .Values.service.externalIPs }}
   externalIPs:
 {{ toYaml .Values.service.externalIPs | indent 4 }}

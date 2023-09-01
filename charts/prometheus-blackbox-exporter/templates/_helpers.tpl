@@ -101,3 +101,23 @@ The image to use
 {{- .Values.image.repository -}}:{{- .Values.image.tag | default .Chart.AppVersion -}}
 {{- with .Values.image.digest -}}@{{ .}}{{- end -}}
 {{- end -}}
+
+
+{{/*
+The image to use for kubeRBACProxy
+*/}}
+{{- define "kubeRBACProxy.image" -}}
+{{- if .Values.kubeRBACProxy.image.sha }}
+{{- if .Values.global.imageRegistry }}
+{{- printf "%s/%s:%s@%s" .Values.global.imageRegistry .Values.kubeRBACProxy.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.kubeRBACProxy.image.tag) .Values.kubeRBACProxy.image.sha }}
+{{- else }}
+{{- printf "%s/%s:%s@%s" .Values.kubeRBACProxy.image.registry .Values.kubeRBACProxy.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.kubeRBACProxy.image.tag) .Values.kubeRBACProxy.image.sha }}
+{{- end }}
+{{- else }}
+{{- if .Values.global.imageRegistry }}
+{{- printf "%s/%s:%s" .Values.global.imageRegistry .Values.kubeRBACProxy.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.kubeRBACProxy.image.tag) }}
+{{- else }}
+{{- printf "%s/%s:%s" .Values.kubeRBACProxy.image.registry .Values.kubeRBACProxy.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.kubeRBACProxy.image.tag) }}
+{{- end }}
+{{- end }}
+{{- end }}
