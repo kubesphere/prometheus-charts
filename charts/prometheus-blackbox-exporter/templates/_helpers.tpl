@@ -40,6 +40,12 @@ helm.sh/chart: {{ include "prometheus-blackbox-exporter.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- if .Values.releaseLabel }}
+release: {{ .Release.Name }}
+{{- end }}
+{{- if .Values.commonLabels }}
+{{ toYaml .Values.commonLabels }}
+{{- end }}
 {{- end }}
 
 {{/*
@@ -80,3 +86,38 @@ Return the appropriate apiVersion for rbac.
     {{- .Release.Namespace -}}
   {{- end -}}
 {{- end -}}
+
+{{/* Enable overriding Kubernetes version for some use cases */}}
+{{- define "prometheus-blackbox-exporter.kubeVersion" -}}
+  {{- default .Capabilities.KubeVersion.Version .Values.kubeVersionOverride -}}
+{{- end -}}
+
+
+{{/*
+The image to use
+*/}}
+{{- define "prometheus-blackbox-exporter.image" -}}
+{{- with (.Values.global.imageRegistry | default .Values.image.registry) -}}{{ . }}/{{- end }}
+{{- .Values.image.repository -}}:{{- .Values.image.tag | default .Chart.AppVersion -}}
+{{- with .Values.image.digest -}}@{{ .}}{{- end -}}
+{{- end -}}
+
+
+{{/*
+The image to use for kubeRBACProxy
+*/}}
+{{- define "kubeRBACProxy.image" -}}
+{{- if .Values.kubeRBACProxy.image.sha }}
+{{- if .Values.global.imageRegistry }}
+{{- printf "%s/%s:%s@%s" .Values.global.imageRegistry .Values.kubeRBACProxy.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.kubeRBACProxy.image.tag) .Values.kubeRBACProxy.image.sha }}
+{{- else }}
+{{- printf "%s/%s:%s@%s" .Values.kubeRBACProxy.image.registry .Values.kubeRBACProxy.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.kubeRBACProxy.image.tag) .Values.kubeRBACProxy.image.sha }}
+{{- end }}
+{{- else }}
+{{- if .Values.global.imageRegistry }}
+{{- printf "%s/%s:%s" .Values.global.imageRegistry .Values.kubeRBACProxy.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.kubeRBACProxy.image.tag) }}
+{{- else }}
+{{- printf "%s/%s:%s" .Values.kubeRBACProxy.image.registry .Values.kubeRBACProxy.image.repository (default (printf "v%s" .Chart.AppVersion) .Values.kubeRBACProxy.image.tag) }}
+{{- end }}
+{{- end }}
+{{- end }}

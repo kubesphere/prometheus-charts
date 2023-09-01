@@ -1,4 +1,5 @@
-{{- if .Values.pspEnabled }}
+
+{{- if or (eq .Values.pspEnabled true) (eq .Values.kubeRBACProxy.enabled true) }}
 apiVersion: {{ template "rbac.apiVersion" . }}
 kind: Role
 metadata:
@@ -7,6 +8,7 @@ metadata:
   name: {{ template "prometheus-blackbox-exporter.fullname" . }}
   namespace: {{ template "prometheus-blackbox-exporter.namespace" . }}
 rules:
+  {{- if and .Values.pspEnabled (.Capabilities.APIVersions.Has "policy/v1beta1/PodSecurityPolicy") }}
   - apiGroups:
     - policy
     resources:
@@ -15,4 +17,15 @@ rules:
     - {{ template "prometheus-blackbox-exporter.fullname" . }}-psp
     verbs:
     - use
+  {{- end }}
+  {{-  if $.Values.kubeRBACProxy.enabled  }}
+  - apiGroups: ["authentication.k8s.io"]
+    resources:
+      - tokenreviews
+    verbs: ["create"]
+  - apiGroups: ["authorization.k8s.io"]
+    resources:
+      - subjectaccessreviews
+    verbs: ["create"]
+  {{- end }}
 {{- end -}}

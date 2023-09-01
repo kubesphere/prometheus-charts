@@ -8,7 +8,8 @@ See https://github.com/prometheus/blackbox_exporter/ for how to configure Promet
   {{- end }}
 {{- end }}
 
-{{ if and .Values.ingress.className (semverCompare "<=1.18-0" .Capabilities.KubeVersion.GitVersion) }}
+{{- $kubeVersion := include "prometheus-blackbox-exporter.kubeVersion" . -}}
+{{ if and .Values.ingress.className (semverCompare "<=1.18-0" $kubeVersion) }}
 You've set ".Values.ingressClassName" but it's not supported by your Kubernetes version!
 Therefore the option was not added and the old ingress annotation was set.
 {{ end }}
@@ -27,4 +28,18 @@ Therefore the option was not added and the old ingress annotation was set.
   export CONTAINER_PORT=$(kubectl get pod --namespace {{ template "prometheus-blackbox-exporter.namespace" . }} $POD_NAME -o jsonpath="{.spec.containers[0].ports[0].containerPort}")
   echo "Visit http://127.0.0.1:8080 to use your application"
   kubectl --namespace {{ template "prometheus-blackbox-exporter.namespace" . }} port-forward $POD_NAME 8080:$CONTAINER_PORT
+{{- end }}
+
+{{- if and (eq .Values.kubeRBACProxy.enabled true) (eq .Values.kubeRBACProxy.authenticateEnabled true) }}
+
+kube-rbac-proxy endpoint protections is enabled:
+- Metrics endpoints are now HTTPS
+- Ensure that the client authenticates the requests (e.g. via service account) with the following role permissions:
+```
+rules:
+  - apiGroups: [ "" ]
+    resources: ["services/{{ template "prometheus-blackbox-exporter.fullname" . }}"]
+    verbs:
+      - get
+```
 {{- end }}

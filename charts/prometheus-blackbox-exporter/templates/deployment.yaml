@@ -28,17 +28,21 @@ spec:
     spec:
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
       serviceAccountName: {{ template "prometheus-blackbox-exporter.serviceAccountName" . }}
-    {{- if .Values.nodeSelector }}
+    {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.nodeSelector }}
       nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
+        {{- toYaml . | nindent 8 }}
     {{- end }}
-    {{- if .Values.affinity }}
+    {{- with .Values.affinity }}
       affinity:
-{{ toYaml .Values.affinity | indent 8 }}
+        {{- toYaml . | nindent 8 }}
     {{- end }}
-    {{- if .Values.tolerations }}
+    {{- with .Values.tolerations }}
       tolerations:
-{{ toYaml .Values.tolerations | indent 6 }}
+        {{- toYaml . | nindent 8 }}
     {{- end }}
     {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
@@ -62,26 +66,30 @@ spec:
       priorityClassName: "{{ .Values.priorityClassName }}"
       {{- end }}
       securityContext:
-{{ toYaml .Values.podSecurityContext | indent 8 }}  
+{{ toYaml .Values.podSecurityContext | indent 8 }}
       {{- if .Values.extraInitContainers }}
       initContainers:
 {{ toYaml .Values.extraInitContainers | indent 8 }}
       {{- end }}
+      {{- $httpPort := ternary 19115 (.Values.service.port | default 9115) .Values.kubeRBACProxy.enabled}}
       containers:
         {{- if .Values.extraContainers }}
 {{ toYaml .Values.extraContainers | indent 8 }}
-        {{- end }}      
+        {{- end }}
         - name: blackbox-exporter
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: {{ include "prometheus-blackbox-exporter.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.securityContext }}
           securityContext:
-{{ toYaml .Values.securityContext | indent 12 }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           env:
           {{- range $key, $value := .Values.extraEnv }}
             - name: {{ $key }}
               value: {{ $value | quote }}
           {{- end }}
           args:
+            - --web.listen-address=:{{ $httpPort }}
 {{- if .Values.config }}
    {{- if .Values.configPath }}
             - "--config.file={{ .Values.configPath }}"
@@ -97,7 +105,7 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           ports:
-            - containerPort: {{ .Values.containerPort }}
+            - containerPort: {{ $httpPort }}
               name: http
           livenessProbe:
             {{- toYaml .Values.livenessProbe | trim | nindent 12 }}
@@ -121,6 +129,48 @@ spec:
           {{- if .Values.extraVolumeMounts }}
 {{ toYaml .Values.extraVolumeMounts | indent 12 }}
           {{- end }}
+        {{-  if .Values.kubeRBACProxy.enabled  }}
+        - name: kube-rbac-proxy
+          args:
+            {{-  if .Values.kubeRBACProxy.extraArgs  }}
+            {{- .Values.kubeRBACProxy.extraArgs | toYaml | nindent 12 }}
+            {{-  end  }}
+            - --secure-listen-address=:{{ .Values.kubeRBACProxy.service.port}}
+            - --upstream=http://127.0.0.1:{{ $httpPort }}/
+            - --proxy-endpoints-port=8888
+            {{-  if .Values.kubeRBACProxy.authenticateEnabled }}
+            - --config-file=/etc/kube-rbac-proxy-config/config-file.yaml
+            {{- else }}
+            - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+            {{-  end }}
+          {{-  if .Values.kubeRBACProxy.authenticateEnabled }}
+          volumeMounts:
+            - name: kube-rbac-proxy-config
+              mountPath: /etc/kube-rbac-proxy-config
+          {{- end }}
+          imagePullPolicy: {{ .Values.kubeRBACProxy.image.pullPolicy }}
+          image: {{ include "kubeRBACProxy.image" . }}
+          ports:
+            - containerPort: {{ .Values.kubeRBACProxy.service.port}}
+              name: {{ .Values.kubeRBACProxy.service.name }}
+            - containerPort: 8888
+              name: "http-healthz"
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+              port: 8888
+              path: healthz
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          {{- if .Values.kubeRBACProxy.resources }}
+          resources:
+          {{ toYaml .Values.kubeRBACProxy.resources | nindent 12 }}
+          {{- end }}
+          {{- if .Values.kubeRBACProxy.containerSecurityContext }}
+          securityContext:
+          {{ toYaml .Values.kubeRBACProxy.containerSecurityContext | nindent 12 }}
+        {{- end }}
+      {{- end }}  
 {{- if .Values.dnsPolicy }}
       dnsPolicy: {{ .Values.dnsPolicy | toString }}
 {{- end }}
@@ -130,9 +180,9 @@ spec:
         {{- toYaml .Values.dnsConfig | nindent 8 }}
 {{- end }}
       volumes:
-    {{- if .Values.extraVolumes }}      
-{{ toYaml .Values.extraVolumes | indent 8 }}      
-    {{- end }}      
+    {{- if .Values.extraVolumes }}
+{{ toYaml .Values.extraVolumes | indent 8 }}
+    {{- end }}
         - name: config
 {{- if .Values.secretConfig }}
           secret:
@@ -155,5 +205,10 @@ spec:
           secret:
             secretName: {{ .secretName }}
             defaultMode: {{ .defaultMode }}
+      {{- end }}
+      {{- if .Values.kubeRBACProxy.authenticateEnabled }}
+        - name: kube-rbac-proxy-config
+          configMap:
+            name: {{ template "prometheus-blackbox-exporter.fullname" . }}-rbac-config
       {{- end }}
 {{- end }}

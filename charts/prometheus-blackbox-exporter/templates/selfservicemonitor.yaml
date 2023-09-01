@@ -1,4 +1,4 @@
-{{- if .Values.serviceMonitor.selfMonitor.enabled }}
+{{- if and (.Values.serviceMonitor.selfMonitor.enabled) (.Capabilities.APIVersions.Has "monitoring.coreos.com/v1/ServiceMonitor") }}
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -12,15 +12,37 @@ metadata:
     {{- end }}
 spec:
   endpoints:
-  - path: /metrics
-    interval: {{ .Values.serviceMonitor.selfMonitor.interval }}
-    scrapeTimeout: {{ .Values.serviceMonitor.selfMonitor.scrapeTimeout }}
-    scheme: http
-
-{{- if .Values.serviceMonitor.selfMonitor.additionalRelabeling }}
+  - port: {{ $.Values.serviceMonitor.selfMonitor.port }}
+    scheme: {{ $.Values.serviceMonitor.selfMonitor.scheme }}
+    path: {{ .Values.serviceMonitor.selfMonitor.path }}
+    {{- with .Values.serviceMonitor.selfMonitor.basicAuth }}
+    basicAuth:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.serviceMonitor.selfMonitor.bearerTokenFile }}
+    bearerTokenFile: {{ . }}
+    {{- end }}
+    {{- with .Values.serviceMonitor.selfMonitor.tlsConfig }}
+    tlsConfig:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.serviceMonitor.selfMonitor.proxyUrl }}
+    proxyUrl: {{ . }}
+    {{- end }}
+    {{- with .Values.serviceMonitor.selfMonitor.interval }}
+    interval: {{ . }}
+    {{- end }}
+    {{- with .Values.serviceMonitor.selfMonitor.scrapeTimeout }}
+    scrapeTimeout: {{ . }}
+    {{- end }}
+    {{- with .Values.serviceMonitor.selfMonitor.relabelings }}
     relabelings:
-{{ toYaml .Values.serviceMonitor.selfMonitor.additionalRelabeling | indent 6 }}
-{{- end }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with .Values.serviceMonitor.selfMonitor.metricRelabelings }}
+    metricRelabelings:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
   jobLabel: "{{ .Release.Name }}"
   selector:
     matchLabels:

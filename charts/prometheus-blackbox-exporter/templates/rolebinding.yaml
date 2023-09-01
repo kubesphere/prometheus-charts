@@ -1,4 +1,4 @@
-{{- if .Values.pspEnabled }}
+{{- if or (eq .Values.pspEnabled true) (eq .Values.kubeRBACProxy.enabled true) }}
 apiVersion: {{ template "rbac.apiVersion" . }}
 kind: RoleBinding
 metadata:
