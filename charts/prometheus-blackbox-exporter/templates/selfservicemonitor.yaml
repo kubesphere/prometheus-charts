@@ -12,8 +12,8 @@ metadata:
     {{- end }}
 spec:
   endpoints:
-  - port: {{ $.Values.serviceMonitor.selfMonitor.port }}
-    scheme: {{ $.Values.serviceMonitor.selfMonitor.scheme }}
+  - port: {{if $.Values.kubeRBACProxy.enabled}}{{ $.Values.kubeRBACProxy.service.name }}{{else}}http{{end}}
+    scheme: {{if $.Values.kubeRBACProxy.enabled}}https{{else}}http{{end}}
     path: {{ .Values.serviceMonitor.selfMonitor.path }}
     {{- with .Values.serviceMonitor.selfMonitor.basicAuth }}
     basicAuth:

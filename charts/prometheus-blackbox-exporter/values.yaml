@@ -286,8 +286,6 @@ serviceMonitor:
     enabled: false
     labels:
       app.kubernetes.io/vendor: kubesphere
-    port: https
-    scheme: https
     path: /metrics
     scrapeTimeout: 30s
     tlsConfig:
@@ -309,14 +307,13 @@ serviceMonitor:
     interval: 30s
     scrapeTimeout: 30s
     module: http_2xx
-  ## scheme: HTTP scheme to use for scraping. Can be used with `tlsConfig` for example if using istio mTLS.
-  scheme: http
   ## path: HTTP path. Needs to be adjusted, if web.route-prefix is set
   path: "/probe"
   ## tlsConfig: TLS configuration to use when scraping the endpoint. For example if using istio mTLS.
   ## Of type: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#tlsconfig
-  tlsConfig: {}
-  bearerTokenFile:
+  tlsConfig:
+    insecureSkipVerify: true
+  bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
 
   targets:
 #    - name: example                    # Human readable URL that will appear in Prometheus / AlertManager
