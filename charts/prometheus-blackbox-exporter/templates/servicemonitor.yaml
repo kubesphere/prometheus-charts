@@ -13,8 +13,8 @@ metadata:
     {{- end }}
 spec:
   endpoints:
-  - port: http
-    scheme: {{ $.Values.serviceMonitor.scheme }}
+  - port: {{if $.Values.kubeRBACProxy.enabled}}{{ $.Values.kubeRBACProxy.service.name }}{{else}}http{{end}}
+    scheme: {{if $.Values.kubeRBACProxy.enabled}}https{{else}}http{{end}}
     {{- if $.Values.serviceMonitor.bearerTokenFile }}
     bearerTokenFile: {{ $.Values.serviceMonitor.bearerTokenFile }}
     {{- end }}

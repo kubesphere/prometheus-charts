@@ -1,16 +1,16 @@
-{{- if and .Values.pspEnabled (.Capabilities.APIVersions.Has "policy/v1beta1/PodSecurityPolicy") }}
+{{- if .Values.kubeRBACProxy.enabled }}
 apiVersion: {{ template "rbac.apiVersion" . }}
-kind: RoleBinding
+kind: ClusterRoleBinding
 metadata:
   labels:
     {{- include "prometheus-blackbox-exporter.labels" . | nindent 4 }}
   name: {{ template "prometheus-blackbox-exporter.fullname" . }}
-  namespace: {{ template "prometheus-blackbox-exporter.namespace" . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: {{ template "prometheus-blackbox-exporter.fullname" . }}
 subjects:
   - kind: ServiceAccount
     name: {{ template "prometheus-blackbox-exporter.serviceAccountName" . }}
-{{- end -}}
+    namespace: {{ template "prometheus-blackbox-exporter.namespace" . }}
+{{- end }}

@@ -2,14 +2,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ template "kube-state-metrics.fullname" . }}-rbac-config
+  name: {{ template "prometheus-blackbox-exporter.fullname" . }}-rbac-config
+  namespace: {{ template "prometheus-blackbox-exporter.namespace" . }}
 data:
   config-file.yaml: |+
     authorization:
       resourceAttributes:
-        namespace: {{ template "kube-state-metrics.namespace" . }}
+        namespace: {{ template "prometheus-blackbox-exporter.namespace" . }}
         apiVersion: v1
         resource: services
-        subresource: {{ template "kube-state-metrics.fullname" . }}
-        name: {{ template "kube-state-metrics.fullname" . }}
+        subresource: {{ template "prometheus-blackbox-exporter.fullname" . }}
+        name: {{ template "prometheus-blackbox-exporter.fullname" . }}
 {{- end }}
