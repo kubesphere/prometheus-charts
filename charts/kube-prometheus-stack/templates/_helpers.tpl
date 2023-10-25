@@ -31,8 +31,20 @@ The longest name that gets created adds and extra 37 characters, so truncation s
 
 {{/* Prometheus custom resource instance name */}}
 {{- define "kube-prometheus-stack.prometheus.crname" -}}
-{{- if .Values.cleanPrometheusOperatorObjectNames }}
+{{- if .Values.prometheus.crname }}
+{{- .Values.prometheus.crname }}
+{{- else if .Values.cleanPrometheusOperatorObjectNames }}
 {{- include "kube-prometheus-stack.fullname" . }}
+{{- else }}
+{{- print (include "kube-prometheus-stack.fullname" .) "-prometheus" }}
+{{- end }}
+{{- end }}
+
+
+{{/* Prometheus kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.prometheus.heritageName" -}}
+{{- if .Values.prometheus.heritageName }}
+{{- .Values.prometheus.heritageName }}
 {{- else }}
 {{- print (include "kube-prometheus-stack.fullname" .) "-prometheus" }}
 {{- end }}
@@ -45,10 +57,21 @@ The longest name that gets created adds and extra 37 characters, so truncation s
 
 {{/* Alertmanager custom resource instance name */}}
 {{- define "kube-prometheus-stack.alertmanager.crname" -}}
-{{- if .Values.cleanPrometheusOperatorObjectNames }}
+{{- if .Values.alertmanager.crname }}
+{{- .Values.alertmanager.crname }}
+{{- else if .Values.cleanPrometheusOperatorObjectNames }}
 {{- include "kube-prometheus-stack.fullname" . }}
 {{- else }}
 {{- print (include "kube-prometheus-stack.fullname" .) "-alertmanager" -}}
+{{- end }}
+{{- end }}
+
+{{/* Alertmanager kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.alertmanager.heritageName" -}}
+{{- if .Values.alertmanager.heritageName }}
+{{- .Values.alertmanager.heritageName }}
+{{- else }}
+{{- print (include "kube-prometheus-stack.fullname" .) "-alertmanager" }}
 {{- end }}
 {{- end }}
 
@@ -62,6 +85,78 @@ The longest name that gets created adds and extra 37 characters, so truncation s
 {{- default (printf "%s-thanos-ruler" (include "kube-prometheus-stack.name" .)) .Values.thanosRuler.name -}}
 {{- end }}
 
+{{/* Shortened name suffixed with thanos-ruler */}}
+{{- define "kube-prometheus-stack.thanosRuler.crname" -}}
+{{- default (printf "" (include "kube-prometheus-stack.name" .)) .Values.thanosRuler.crname -}}
+{{- end }}
+
+
+{{/* Prometheus-Operator kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.prometheus-operator.heritageName" -}}
+{{- if .Values.prometheusOperator.heritageName }}
+{{- .Values.prometheusOperator.heritageName }}
+{{- else }}
+{{- printf "%s-operator" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+{{- end }}
+
+
+{{/* apiserver kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.apiserver.heritageName" -}}
+{{- if .Values.kubeApiServer.heritageName }}
+{{- .Values.kubeApiServer.heritageName }}
+{{- else }}
+{{- printf "%s-apiserver" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+{{- end }}
+
+
+{{/* kube-etcd kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.kube-etcd.heritageName" -}}
+{{- if .Values.kubeEtcd.heritageName }}
+{{- .Values.kubeEtcd.heritageName }}
+{{- else }}
+{{- printf "%s-kube-etcd" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+{{- end }}
+
+
+{{/* kube-controller-manager kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.kube-controller-manager.heritageName" -}}
+{{- if .Values.kubeControllerManager.heritageName }}
+{{- .Values.kubeControllerManager.heritageName }}
+{{- else }}
+{{- printf "%s-kube-controller-manager" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+{{- end }}
+
+
+{{/* kube-proxy kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.kube-proxy.heritageName" -}}
+{{- if .Values.kubeProxy.heritageName }}
+{{- .Values.kubeProxy.heritageName }}
+{{- else }}
+{{- printf "%s-kube-proxy" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+{{- end }}
+
+{{/* kube-scheduler kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.kube-scheduler.heritageName" -}}
+{{- if .Values.kubeScheduler.heritageName }}
+{{- .Values.kubeScheduler.heritageName }}
+{{- else }}
+{{- printf "%s-kube-scheduler" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+{{- end }}
+
+{{/* kubelet kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.kubelet.heritageName" -}}
+{{- if .Values.kubelet.heritageName }}
+{{- .Values.kubelet.heritageName }}
+{{- else }}
+{{- printf "%s-kubelet" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+{{- end }}
 
 {{/* Create chart name and version as used by the chart label. */}}
 {{- define "kube-prometheus-stack.chartref" -}}

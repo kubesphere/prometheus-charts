@@ -36,7 +36,7 @@ crds:
 ## Create default rules for monitoring the cluster
 ##
 defaultRules:
-  create: true
+  create: false
   rules:
     alertmanager: true
     etcd: true
@@ -237,6 +237,8 @@ alertmanager:
   ## Deploy alertmanager
   ##
   enabled: true
+  crname: main
+  heritageName: alertmanager-main
 
   ## Annotations for Alertmanager
   ##
@@ -250,7 +252,7 @@ alertmanager:
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   ##
   serviceAccount:
-    create: true
+    create: false
     name: ""
     annotations: {}
     automountServiceAccountToken: true
@@ -900,6 +902,7 @@ alertmanager:
 grafana:
   enabled: true
   namespaceOverride: ""
+  fullnameOverride: "grafana"
 
   ## ForceDeployDatasources Create datasource configmap even if grafana deployment has been disabled
   ##
@@ -1097,6 +1100,8 @@ kubernetesServiceMonitors:
 ##
 kubeApiServer:
   enabled: true
+  heritageName: kube-apiserver
+
   tlsConfig:
     serverName: kubernetes
     insecureSkipVerify: false
@@ -1172,6 +1177,7 @@ kubeApiServer:
 kubelet:
   enabled: true
   namespace: kube-system
+  heritageName: kubelet
 
   serviceMonitor:
     ## Attach metadata to discovered targets. Requires Prometheus v2.45 for endpoints created by the operator.
@@ -1363,7 +1369,7 @@ kubelet:
 ##
 kubeControllerManager:
   enabled: true
-
+  heritageName: kube-controller-manager
   ## If your kube controller manager is not deployed as a pod, specify IPs it can be found on
   ##
   endpoints: []
@@ -1453,6 +1459,7 @@ kubeControllerManager:
 ##
 coreDns:
   enabled: true
+  heritageName: coredns-monitor
   service:
     port: 9153
     targetPort: 9153
@@ -1600,7 +1607,7 @@ kubeDns:
 ##
 kubeEtcd:
   enabled: true
-
+  heritageName: etcd
   ## If your etcd is not deployed as a pod, specify IPs it can be found on
   ##
   endpoints: []
@@ -1692,6 +1699,7 @@ kubeEtcd:
 ##
 kubeScheduler:
   enabled: true
+  heritageName: kube-scheduler
 
   ## If your kube scheduler is not deployed as a pod, specify IPs it can be found on
   ##
@@ -1780,7 +1788,8 @@ kubeScheduler:
 ## Component scraping kube proxy
 ##
 kubeProxy:
-  enabled: true
+  enabled: false
+  heritageName: ""
 
   ## If your kube proxy is not deployed as a pod, specify IPs it can be found on
   ##
@@ -1861,6 +1870,7 @@ kubeStateMetrics:
 ##
 kube-state-metrics:
   namespaceOverride: ""
+  fullnameOverride: "kube-state-metrics"
   rbac:
     create: true
   releaseLabel: true
@@ -1940,6 +1950,7 @@ nodeExporter:
 ##
 prometheus-node-exporter:
   namespaceOverride: ""
+  fullnameOverride: "node-exporter"
   podLabels:
     ## Add the 'node-exporter' label to be used by serviceMonitor to match standard common usage in rules and grafana dashboards
     ##
@@ -2014,9 +2025,10 @@ prometheus-node-exporter:
     pspEnabled: false
 
 ## Manages Prometheus and Alertmanager components
-##
+##ku
 prometheusOperator:
   enabled: true
+  heritageName: prometheus-operator
 
   ## Number of old replicasets to retain ##
   ## The default value is 10, 0 will garbage-collect old replicasets ##
@@ -2025,7 +2037,7 @@ prometheusOperator:
   ## Prometheus-Operator v0.39.0 and later support TLS natively.
   ##
   tls:
-    enabled: true
+    enabled: false
     # Value must match version names from https://golang.org/pkg/crypto/tls/#pkg-constants
     tlsMinVersion: VersionTLS13
     # The default webhook port is 10250 in order to work out-of-the-box in GKE private clusters and avoid adding firewall rules.
@@ -2039,7 +2051,7 @@ prometheusOperator:
     failurePolicy: ""
     ## The default timeoutSeconds is 10 and the maximum value is 30.
     timeoutSeconds: 10
-    enabled: true
+    enabled: false
     ## A PEM encoded CA bundle which will be used to validate the webhook's server certificate.
     ## If unspecified, system trust roots on the apiserver are used.
     caBundle: ""
@@ -2051,7 +2063,7 @@ prometheusOperator:
     #   argocd.argoproj.io/hook: PreSync
     #   argocd.argoproj.io/hook-delete-policy: HookSucceeded
     patch:
-      enabled: true
+      enabled: false
       image:
         registry: registry.k8s.io
         repository: ingress-nginx/kube-webhook-certgen
@@ -2158,7 +2170,7 @@ prometheusOperator:
   ##
   serviceAccount:
     create: true
-    name: ""
+    name: "prometheus-operator"
 
   ## Configuration for Prometheus operator service
   ##
@@ -2232,7 +2244,7 @@ prometheusOperator:
     enabled: true
     namespace: kube-system
     ## Use '{{ template "kube-prometheus-stack.fullname" . }}-kubelet' by default
-    name: ""
+    name: "kubelet"
 
   ## Create a servicemonitor for the operator
   ##
@@ -2461,6 +2473,8 @@ prometheusOperator:
 ##
 prometheus:
   enabled: true
+  crname: k8s
+  heritageName: prometheus-k8s
 
   ## Toggle prometheus into agent mode
   ## Note many of features described below (e.g. rules, query, alerting, remote read, thanos) will not work in agent mode.
@@ -2500,7 +2514,7 @@ prometheus:
   ##
   serviceAccount:
     create: true
-    name: ""
+    name: "prometheus-k8s"
     annotations: {}
 
   # Service for thanos service discovery on sidecar
@@ -3057,7 +3071,7 @@ prometheus:
     ## prometheus resource to be created with selectors based on values in the helm deployment,
     ## which will also match the PrometheusRule resources created
     ##
-    ruleSelectorNilUsesHelmValues: true
+    ruleSelectorNilUsesHelmValues: false
 
     ## PrometheusRules to be selected for target discovery.
     ## If {}, select all PrometheusRules
@@ -3082,7 +3096,7 @@ prometheus:
     ## prometheus resource to be created with selectors based on values in the helm deployment,
     ## which will also match the servicemonitors created
     ##
-    serviceMonitorSelectorNilUsesHelmValues: true
+    serviceMonitorSelectorNilUsesHelmValues: false
 
     ## ServiceMonitors to be selected for target discovery.
     ## If {}, select all ServiceMonitors
@@ -3105,7 +3119,7 @@ prometheus:
     ## prometheus resource to be created with selectors based on values in the helm deployment,
     ## which will also match the podmonitors created
     ##
-    podMonitorSelectorNilUsesHelmValues: true
+    podMonitorSelectorNilUsesHelmValues: false
 
     ## PodMonitors to be selected for target discovery.
     ## If {}, select all PodMonitors
@@ -3127,7 +3141,7 @@ prometheus:
     ## prometheus resource to be created with selectors based on values in the helm deployment,
     ## which will also match the probes created
     ##
-    probeSelectorNilUsesHelmValues: true
+    probeSelectorNilUsesHelmValues: false
 
     ## Probes to be selected for target discovery.
     ## If {}, select all Probes
@@ -3149,7 +3163,7 @@ prometheus:
     ## prometheus resource to be created with selectors based on values in the helm deployment,
     ## which will also match the scrapeConfigs created
     ##
-    scrapeConfigSelectorNilUsesHelmValues: true
+    scrapeConfigSelectorNilUsesHelmValues: false
 
     ## scrapeConfigs to be selected for target discovery.
     ## If {}, select all scrapeConfigs
@@ -3730,7 +3744,9 @@ thanosRuler:
 
   ## Deploy thanosRuler
   ##
-  enabled: false
+  enabled: true
+  name: thanos-ruler-kubesphere
+  crname: kubesphere
 
   ## Annotations for ThanosRuler
   ##
@@ -3740,7 +3756,7 @@ thanosRuler:
   ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
   ##
   serviceAccount:
-    create: true
+    create: false
     name: ""
     annotations: {}
 
@@ -3920,7 +3936,7 @@ thanosRuler:
     ## prometheus resource to be created with selectors based on values in the helm deployment,
     ## which will also match the PrometheusRule resources created
     ##
-    ruleSelectorNilUsesHelmValues: true
+    ruleSelectorNilUsesHelmValues: false
 
     ## PrometheusRules to be selected for target discovery.
     ## If {}, select all PrometheusRules
@@ -4011,7 +4027,8 @@ thanosRuler:
 
     ## QueryEndpoints defines Thanos querier endpoints from which to query metrics.
     ## Maps to the --query flag of thanos ruler.
-    queryEndpoints: []
+    queryEndpoints: 
+    - prometheus-k8s.kubesphere-monitoring-system.svc:9090
 
     ## Define configuration for connecting to thanos query instances. If this is defined, the queryEndpoints field will be ignored.
     ## Maps to the query.config CLI argument. Only available with thanos v0.11.0 and higher.
