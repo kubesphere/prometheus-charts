@@ -3,18 +3,10 @@
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: alertmanager-{{ include "alertmanager.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: alertmanager-{{ include "alertmanager.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 rules:
 {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
@@ -26,10 +18,6 @@ rules:
   resources: ['podsecuritypolicies']
   verbs:     ['use']
   resourceNames:
-  {{- if .Values.heritageNameOverride }}
-  - alertmanager-{{ include "alertmanager.heritageName" . }}
-  {{- else }}
   - {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
-  {{- end }}
 {{- end }}
 {{- end }}

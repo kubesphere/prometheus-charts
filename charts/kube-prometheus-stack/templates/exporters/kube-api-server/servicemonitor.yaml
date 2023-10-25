@@ -1,32 +1,24 @@
-{{- if .Values.kubeApiServer.enabled }}
+{{- if and .Values.kubeApiServer.enabled .Values.kubernetesServiceMonitors.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: kube-apiserver
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-apiserver
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: apiserver
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-apiserver
-    {{- end }}
   {{- with .Values.kubeApiServer.serviceMonitor.additionalLabels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
-{{- include "kubesphere-monitor.labels" . | indent 4 }}
 spec:
+  {{- include "servicemonitor.scrapeLimits" .Values.kubeApiServer.serviceMonitor | nindent 2 }}
   endpoints:
   - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
     {{- if .Values.kubeApiServer.serviceMonitor.interval }}
     interval: {{ .Values.kubeApiServer.serviceMonitor.interval }}
     {{- end }}
     {{- if .Values.kubeApiServer.serviceMonitor.proxyUrl }}
-    proxyUrl: {{ .Values.kubeApiServer.serviceMonitor.proxyUrl}}
+    proxyUrl: {{ .Values.kubeApiServer.serviceMonitor.proxyUrl }}
     {{- end }}
     port: https
     scheme: https

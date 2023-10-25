@@ -1,19 +1,12 @@
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
 {{- if .Values.prometheus.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: prometheus-{{ include "prometheus.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: prometheus-{{ include "prometheus.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-prometheus
-    {{- end }}
     self-monitor: {{ .Values.prometheus.serviceMonitor.selfMonitor | quote }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.prometheus.service.labels }}
@@ -50,6 +43,12 @@ spec:
     {{- end }}
     port: {{ .Values.prometheus.service.port }}
     targetPort: {{ .Values.prometheus.service.targetPort }}
+  - name: reloader-web
+    {{- if semverCompare "> 1.20.0-0" $kubeTargetVersion }}
+    appProtocol: http
+    {{- end }}
+    port: 8080
+    targetPort: reloader-web
   {{- if .Values.prometheus.thanosIngress.enabled }}
   - name: grpc
     {{- if eq .Values.prometheus.service.type "NodePort" }}
@@ -63,12 +62,12 @@ spec:
 {{- end }}
   publishNotReadyAddresses: {{ .Values.prometheus.service.publishNotReadyAddresses }}
   selector:
-    app.kubernetes.io/name: prometheus
-    {{- if .Values.heritageNameOverride }}
-    prometheus: {{ include "prometheus.heritageName" . }}
+    {{- if .Values.prometheus.agentMode }}
+    app.kubernetes.io/name: prometheus-agent
     {{- else }}
-    prometheus: {{ template "kube-prometheus-stack.prometheus.crname" . }}
+    app.kubernetes.io/name: prometheus
     {{- end }}
+    operator.prometheus.io/name: {{ template "kube-prometheus-stack.prometheus.crname" . }}
 {{- if .Values.prometheus.service.sessionAffinity }}
   sessionAffinity: {{ .Values.prometheus.service.sessionAffinity }}
 {{- end }}

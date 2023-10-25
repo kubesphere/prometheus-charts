@@ -8,29 +8,17 @@
 apiVersion: v1
 kind: List
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: alertmanager-{{ include "alertmanager.heritageName" . }}-ingressperreplica
-  {{- else }}
   name: {{ include "kube-prometheus-stack.fullname" $ }}-alertmanager-ingressperreplica
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
 items:
 {{ range $i, $e := until $count }}
   - kind: Ingress
     apiVersion: {{ include "kube-prometheus-stack.ingress.apiVersion" $ }}
     metadata:
-      {{- if .Values.heritageNameOverride }}
-      name: alertmanager-{{ include "alertmanager.heritageName" $ }}-{{ $i }}
-      {{- else }}
       name: {{ include "kube-prometheus-stack.fullname" $ }}-alertmanager-{{ $i }}
-      {{- end }}
       namespace: {{ template "kube-prometheus-stack.namespace" $ }}
       labels:
-        {{- if .Values.heritageNameOverride }}
-        app: alertmanager-{{ include "alertmanager.heritageName" . }}
-        {{- else }}
         app: {{ include "kube-prometheus-stack.name" $ }}-alertmanager
-        {{- end }}
       {{ include "kube-prometheus-stack.labels" $ | indent 8 }}
       {{- if $ingressValues.labels }}
 {{ toYaml $ingressValues.labels | indent 8 }}
@@ -57,19 +45,11 @@ items:
                 backend:
                   {{- if $apiIsStable }}
                   service:
-                    {{- if .Values.heritageNameOverride }}
-                    name: alertmanager-{{ include "alertmanager.heritageName" . }}-{{ $i }}
-                    {{- else }}
                     name: {{ include "kube-prometheus-stack.fullname" $ }}-alertmanager-{{ $i }}
-                    {{- end }}
                     port:
                       number: {{ $servicePort }}
                   {{- else }}
-                  {{- if .Values.heritageNameOverride }}
-                  serviceName: alertmanager-{{ include "alertmanager.heritageName" . }}-{{ $i }}
-                  {{- else }}
                   serviceName: {{ include "kube-prometheus-stack.fullname" $ }}-alertmanager-{{ $i }}
-                  {{- end }}
                   servicePort: {{ $servicePort }}
       {{- end }}
       {{- end -}}

@@ -1,18 +1,10 @@
-{{- if and .Values.kubeProxy.enabled .Values.kubeProxy.service.enabled }}
+{{- if and .Values.kubeProxy.enabled .Values.kubeProxy.service.enabled .Values.kubernetesServiceMonitors.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: kube-proxy-svc
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-kube-proxy
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: kube-proxy
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-kube-proxy
-    {{- end }}
     jobLabel: kube-proxy
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
   namespace: kube-system

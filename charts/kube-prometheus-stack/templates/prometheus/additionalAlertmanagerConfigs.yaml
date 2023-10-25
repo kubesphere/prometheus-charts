@@ -2,22 +2,14 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: prometheus-{{ include "prometheus.heritageName" . }}-am-config
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus-am-confg
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
 {{- if .Values.prometheus.prometheusSpec.additionalPrometheusSecretsAnnotations }}
   annotations:
 {{ toYaml .Values.prometheus.prometheusSpec.additionalPrometheusSecretsAnnotations | indent 4 }}
 {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: prometheus-{{ include "prometheus.heritageName" . }}-am-config
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-prometheus-am-confg
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 data:
   additional-alertmanager-configs.yaml: {{ tpl (toYaml .Values.prometheus.prometheusSpec.additionalAlertManagerConfigs) . | b64enc | quote }}

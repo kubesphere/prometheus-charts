@@ -2,18 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: prometheus-{{ include "prometheus.heritageName" . }}-thanos-discovery
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-thanos-discovery
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    name: prometheus-{{ include "prometheus.heritageName" . }}-thanos-discovery
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-thanos-discovery
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.prometheus.thanosService.labels }}
 {{ toYaml .Values.prometheus.thanosService.labels | indent 4 }}
@@ -43,9 +35,5 @@ spec:
     {{- end }}
   selector:
     app.kubernetes.io/name: prometheus
-    {{- if .Values.heritageNameOverride }}
-    prometheus: {{ include "prometheus.heritageName" . }}
-    {{- else }}
-    prometheus: {{ template "kube-prometheus-stack.prometheus.crname" . }}
-    {{- end }}
+    operator.prometheus.io/name: {{ template "kube-prometheus-stack.prometheus.crname" . }}
 {{- end }}

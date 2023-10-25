@@ -2,27 +2,19 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: alertmanager-{{ include "alertmanager.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: alertmanager-{{ include "alertmanager.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- with .Values.alertmanager.serviceMonitor.additionalLabels }}
+{{- toYaml . | nindent 4 }}
+{{- end }}
 spec:
+  {{- include "servicemonitor.scrapeLimits" .Values.alertmanager.serviceMonitor | nindent 2 }}
   selector:
     matchLabels:
-      {{- if .Values.heritageNameOverride }}
-      app: alertmanager-{{ include "alertmanager.heritageName" . }}
-      {{- else }}
       app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
-      {{- end }}
       release: {{ $.Release.Name | quote }}
       self-monitor: "true"
   namespaceSelector:
@@ -44,15 +36,53 @@ spec:
     bearerTokenFile: {{ .Values.alertmanager.serviceMonitor.bearerTokenFile }}
     {{- end }}
     {{- if .Values.alertmanager.serviceMonitor.tlsConfig }}
-    tlsConfig: {{ toYaml .Values.alertmanager.serviceMonitor.tlsConfig | nindent 6 }}
+    tlsConfig: {{- toYaml .Values.alertmanager.serviceMonitor.tlsConfig | nindent 6 }}
     {{- end }}
     path: "{{ trimSuffix "/" .Values.alertmanager.alertmanagerSpec.routePrefix }}/metrics"
-{{- if .Values.alertmanager.serviceMonitor.metricRelabelings }}
-    metricRelabelings:
-{{ tpl (toYaml .Values.alertmanager.serviceMonitor.metricRelabelings | indent 6) . }}
-{{- end }}
-{{- if .Values.alertmanager.serviceMonitor.relabelings }}
-    relabelings:
-{{ toYaml .Values.alertmanager.serviceMonitor.relabelings | indent 6 }}
-{{- end }}
+    {{- if .Values.alertmanager.serviceMonitor.metricRelabelings }}
+    metricRelabelings: {{- tpl (toYaml .Values.alertmanager.serviceMonitor.metricRelabelings | nindent 6) . }}
+    {{- end }}
+    {{- if .Values.alertmanager.serviceMonitor.relabelings }}
+    relabelings: {{- toYaml .Values.alertmanager.serviceMonitor.relabelings | nindent 6 }}
+    {{- end }}
+  - port: reloader-web
+    {{- if .Values.alertmanager.serviceMonitor.interval }}
+    interval: {{ .Values.alertmanager.serviceMonitor.interval }}
+    {{- end }}
+    {{- if .Values.alertmanager.serviceMonitor.proxyUrl }}
+    proxyUrl: {{ .Values.alertmanager.serviceMonitor.proxyUrl}}
+    {{- end }}
+    scheme: http
+    path: "/metrics"
+    {{- if .Values.alertmanager.serviceMonitor.metricRelabelings }}
+    metricRelabelings: {{- tpl (toYaml .Values.alertmanager.serviceMonitor.metricRelabelings | nindent 6) . }}
+    {{- end }}
+    {{- if .Values.alertmanager.serviceMonitor.relabelings }}
+    relabelings: {{- toYaml .Values.alertmanager.serviceMonitor.relabelings | nindent 6 }}
+    {{- end }}
+  {{- range .Values.alertmanager.serviceMonitor.additionalEndpoints }}
+  - port: {{ .port }}
+    {{- if or $.Values.alertmanager.serviceMonitor.interval .interval }}
+    interval: {{ default $.Values.alertmanager.serviceMonitor.interval .interval }}
+    {{- end }}
+    {{- if or $.Values.alertmanager.serviceMonitor.proxyUrl .proxyUrl }}
+    proxyUrl: {{ default $.Values.alertmanager.serviceMonitor.proxyUrl .proxyUrl }}
+    {{- end }}
+    {{- if or $.Values.alertmanager.serviceMonitor.scheme .scheme }}
+    scheme: {{ default $.Values.alertmanager.serviceMonitor.scheme .scheme }}
+    {{- end }}
+    {{- if or $.Values.alertmanager.serviceMonitor.bearerTokenFile .bearerTokenFile }}
+    bearerTokenFile: {{ default $.Values.alertmanager.serviceMonitor.bearerTokenFile .bearerTokenFile }}
+    {{- end }}
+    {{- if or $.Values.alertmanager.serviceMonitor.tlsConfig .tlsConfig }}
+    tlsConfig: {{- default $.Values.alertmanager.serviceMonitor.tlsConfig .tlsConfig | toYaml | nindent 6 }}
+    {{- end }}
+    path: {{ .path }}
+    {{- if or $.Values.alertmanager.serviceMonitor.metricRelabelings .metricRelabelings }}
+    metricRelabelings: {{- tpl (default $.Values.alertmanager.serviceMonitor.metricRelabelings .metricRelabelings | toYaml | nindent 6) . }}
+    {{- end }}
+    {{- if or $.Values.alertmanager.serviceMonitor.relabelings .relabelings }}
+    relabelings: {{- default $.Values.alertmanager.serviceMonitor.relabelings .relabelings | toYaml | nindent 6 }}
+    {{- end }}
+  {{- end }}
 {{- end }}

@@ -1,18 +1,10 @@
-{{- if and .Values.kubeScheduler.enabled .Values.kubeScheduler.service.enabled }}
+{{- if and .Values.kubeScheduler.enabled .Values.kubeScheduler.service.enabled .Values.kubernetesServiceMonitors.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: kube-scheduler-svc
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-kube-scheduler
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: kube-scheduler
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-kube-scheduler
-    {{- end }}
     jobLabel: kube-scheduler
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
   namespace: kube-system
