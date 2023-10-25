@@ -3,7 +3,7 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus
+  name: {{ template "kube-prometheus-stack.prometheus.heritageName" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}-prometheus
 {{- if .Values.global.rbac.pspAnnotations }}

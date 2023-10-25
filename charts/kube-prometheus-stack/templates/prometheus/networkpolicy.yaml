@@ -5,7 +5,7 @@ metadata:
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}-prometheus
     {{- include "kube-prometheus-stack.labels" . | nindent 4 }}
-  name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus
+  name: {{ template "kube-prometheus-stack.prometheus.heritageName" . }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
 spec:
   {{- if .Values.prometheus.networkPolicy.egress }}

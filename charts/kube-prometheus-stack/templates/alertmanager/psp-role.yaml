@@ -3,7 +3,7 @@
 kind: Role
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
+  name: {{ template "kube-prometheus-stack.alertmanager.heritageName" . }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
@@ -18,6 +18,6 @@ rules:
   resources: ['podsecuritypolicies']
   verbs:     ['use']
   resourceNames:
-  - {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
+  - {{ template "kube-prometheus-stack.alertmanager.heritageName" . }}
 {{- end }}
 {{- end }}

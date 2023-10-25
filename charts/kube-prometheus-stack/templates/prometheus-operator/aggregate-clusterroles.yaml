@@ -3,7 +3,7 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus-crd-view
+  name: {{ template "kube-prometheus-stack.prometheus.heritageName" . }}-crd-view
   labels:
     rbac.authorization.k8s.io/aggregate-to-admin: "true"
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
@@ -18,7 +18,7 @@ rules:
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus-crd-edit
+  name: {{ template "kube-prometheus-stack.prometheus.heritageName" . }}-crd-edit
   labels:
     rbac.authorization.k8s.io/aggregate-to-edit: "true"
     rbac.authorization.k8s.io/aggregate-to-admin: "true"

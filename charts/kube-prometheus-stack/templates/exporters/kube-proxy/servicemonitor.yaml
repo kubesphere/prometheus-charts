@@ -2,7 +2,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: {{ template "kube-prometheus-stack.fullname" . }}-kube-proxy
+  name: {{ template "kube-prometheus-stack.kube-proxy.heritageName" . }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}-kube-proxy

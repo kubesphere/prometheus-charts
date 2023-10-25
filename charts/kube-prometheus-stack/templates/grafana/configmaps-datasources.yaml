@@ -28,7 +28,7 @@ data:
       {{- if .Values.grafana.sidecar.datasources.url }}
       url: {{ .Values.grafana.sidecar.datasources.url }}
       {{- else }}
-      url: http://{{ template "kube-prometheus-stack.fullname" . }}-prometheus.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.prometheus.service.port }}/{{ trimPrefix "/" .Values.prometheus.prometheusSpec.routePrefix }}
+      url: http://{{ template "kube-prometheus-stack.prometheus.heritageName" . }}.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.prometheus.service.port }}/{{ trimPrefix "/" .Values.prometheus.prometheusSpec.routePrefix }}
       {{- end }}
       access: proxy
       isDefault: {{ .Values.grafana.sidecar.datasources.isDefaultDatasource }}
@@ -67,7 +67,7 @@ data:
       {{- if .Values.grafana.sidecar.datasources.alertmanager.url }}
       url: {{ .Values.grafana.sidecar.datasources.alertmanager.url }}
       {{- else }}
-      url: http://{{ template "kube-prometheus-stack.fullname" . }}-alertmanager.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.alertmanager.service.port }}/{{ trimPrefix "/" .Values.alertmanager.alertmanagerSpec.routePrefix }}
+      url: http://{{ template "kube-prometheus-stack.alertmanager.heritageName" . }}.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.alertmanager.service.port }}/{{ trimPrefix "/" .Values.alertmanager.alertmanagerSpec.routePrefix }}
       {{- end }}
       access: proxy
       jsonData:

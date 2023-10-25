@@ -24,7 +24,7 @@ spec:
 {{ toYaml .Values.prometheus.prometheusSpec.alertingEndpoints | indent 6 }}
 {{- else if .Values.alertmanager.enabled }}
       - namespace: {{ template "kube-prometheus-stack.namespace" . }}
-        name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
+        name: {{ template "kube-prometheus-stack.alertmanager.heritageName" . }}
         port: {{ .Values.alertmanager.alertmanagerSpec.portName }}
         {{- if .Values.alertmanager.alertmanagerSpec.routePrefix }}
         pathPrefix: "{{ .Values.alertmanager.alertmanagerSpec.routePrefix }}"
@@ -82,7 +82,7 @@ spec:
 {{- else if and .Values.prometheus.ingress.enabled .Values.prometheus.ingress.hosts }}
   externalUrl: "http://{{ tpl (index .Values.prometheus.ingress.hosts 0) . }}{{ .Values.prometheus.prometheusSpec.routePrefix }}"
 {{- else }}
-  externalUrl: http://{{ template "kube-prometheus-stack.fullname" . }}-prometheus.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.prometheus.service.port }}
+  externalUrl: http://{{ template "kube-prometheus-stack.prometheus.heritageName" . }}.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.prometheus.service.port }}
 {{- end }}
 {{- if .Values.prometheus.prometheusSpec.nodeSelector }}
   nodeSelector:
@@ -308,7 +308,7 @@ spec:
 {{- end }}
 {{- if .Values.prometheus.prometheusSpec.additionalScrapeConfigs }}
   additionalScrapeConfigs:
-    name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus-scrape-confg
+    name: {{ template "kube-prometheus-stack.prometheus.heritageName" . }}-scrape-confg
     key: additional-scrape-configs.yaml
 {{- end }}
 {{- if .Values.prometheus.prometheusSpec.additionalScrapeConfigsSecret.enabled }}
@@ -320,7 +320,7 @@ spec:
 {{- if or .Values.prometheus.prometheusSpec.additionalAlertManagerConfigs .Values.prometheus.prometheusSpec.additionalAlertManagerConfigsSecret }}
   additionalAlertManagerConfigs:
 {{- if .Values.prometheus.prometheusSpec.additionalAlertManagerConfigs }}
-    name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus-am-confg
+    name: {{ template "kube-prometheus-stack.prometheus.heritageName" . }}-am-confg
     key: additional-alertmanager-configs.yaml
 {{- end }}
 {{- if .Values.prometheus.prometheusSpec.additionalAlertManagerConfigsSecret }}
@@ -333,7 +333,7 @@ spec:
 {{- end }}
 {{- if .Values.prometheus.prometheusSpec.additionalAlertRelabelConfigs }}
   additionalAlertRelabelConfigs:
-    name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus-am-relabel-confg
+    name: {{ template "kube-prometheus-stack.prometheus.heritageName" . }}-am-relabel-confg
     key: additional-alert-relabel-configs.yaml
 {{- end }}
 {{- if .Values.prometheus.prometheusSpec.additionalAlertRelabelConfigsSecret }}
