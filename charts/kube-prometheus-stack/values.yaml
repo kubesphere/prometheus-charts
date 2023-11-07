@@ -24,7 +24,8 @@ fullnameOverride: ""
 
 ## Labels to apply to all resources
 ##
-commonLabels: {}
+commonLabels: 
+  app.kubernetes.io/vendor: kubesphere
 # scmhash: abc123
 # myLabel: aakkmd
 
@@ -202,6 +203,9 @@ global:
   # - name: "image-pull-secret"
   # or
   # - "image-pull-secret"
+
+  notificationManager:
+    url: "http://notification-manager-svc.kubesphere-monitoring-system.svc:19093/api/v2/alerts"
 
 windowsMonitoring:
   ## Deploys the windows-exporter and Windows-specific dashboards and rules (job name must be 'windows-exporter')
@@ -489,10 +493,7 @@ alertmanager:
 
     ## Additional ports to open for Alertmanager service
     ##
-    additionalPorts:
-      - name: reloader-web
-        port: 8080
-        targetPort: reloader-web
+    additionalPorts: []
     # - name: oauth-proxy
     #   port: 8081
     #   targetPort: 8081
@@ -2018,7 +2019,7 @@ kube-state-metrics:
     - kube_secret_(type)
     - kube_service_(spec_.+|status_.+)
     - kube_ingress_(info|path|tls)
-    - kube_replicaset_(status_.+|spec_.+|owner)
+    - kube_replicaset_(status_.+|spec_.+)
     - kube_poddisruptionbudget_status_.+
     - kube_replicationcontroller_.+
     - kube_node_info
@@ -2061,7 +2062,7 @@ kube-state-metrics:
     - volumeattachments
     - clusterroles
     - clusterrolebindings
-    - users
+
 
   prometheus:
     monitor:
@@ -2907,10 +2908,7 @@ prometheus:
 
     ## Additional ports to open for Prometheus service
     ##
-    additionalPorts: 
-    - name: reloader-web
-      port: 8080
-      targetPort: reloader-web
+    additionalPorts: []
     # additionalPorts:
     # - name: oauth-proxy
     #   port: 8081
@@ -2923,7 +2921,7 @@ prometheus:
     ## Ref: https://kubernetes.io/docs/reference/kubernetes-api/service-resources/service-v1/#ServiceSpec
     publishNotReadyAddresses: false
 
-    sessionAffinity: "ClusterIP"
+    sessionAffinity: "ClientIP"
 
   ## Configuration for creating a separate Service for each statefulset Prometheus replica
   ##
@@ -3862,12 +3860,7 @@ prometheus:
   #    verbs: [ "get", "list", "watch" ]
 
 
-  additionalServiceMonitors:
-  - name: "reload-web"
-    selfMonitor: true
-    endpoints:
-    - port: reloader-web
-      interval: 1m
+  additionalServiceMonitors: []
   ## Name of the ServiceMonitor to create
   ##
   # - name: ""
@@ -4422,8 +4415,8 @@ thanosRuler:
           - '--alert.label-drop=thanos_ruler_replica'
           - '--log.format=logfmt'
           - '--rule-file=/etc/thanos/rules/*/*.yaml'
-          - '--query=prometheus-operated.{{ template "kube-prometheus-stack.namespace" . }}.svc:9090'
-          - '--alertmanagers.url=dnssrv+http://alertmanager-operated.{{ template "kube-prometheus-stack.namespace" . }}.svc:9093'
+          - '--query=prometheus-operated.{{ template "kube-prometheus-stack.namespace" $ }}.svc:9090'
+          - '--alertmanagers.url=dnssrv+http://alertmanager-operated.{{ template "kube-prometheus-stack.namespace" $ }}.svc:9093'
           - |
             --remote-write.config=remote_write:
               {{- $count := .Values.prometheus.prometheusSpec.replicas | int -}}

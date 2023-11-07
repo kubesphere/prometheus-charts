@@ -154,7 +154,7 @@ spec:
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.containers }}
   containers:
-{{ toYaml .Values.thanosRuler.thanosRulerSpec.containers | indent 4 }}
+{{ tpl (toYaml .Values.thanosRuler.thanosRulerSpec.containers) . | indent 4 }}
 {{- end }}
 {{- if .Values.thanosRuler.thanosRulerSpec.initContainers }}
   initContainers:

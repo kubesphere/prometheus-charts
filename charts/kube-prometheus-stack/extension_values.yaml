@@ -146,6 +146,7 @@ grafana:
       memory: 100Mi
   persistence:
     enabled: true
+    # storageClassName: default
     type: "pvc"
     size: 50Mi
 
