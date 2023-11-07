@@ -45,12 +45,46 @@ local kp =
 // { ['prometheus-adapter-' + name]: kp.prometheusAdapter[name] for name in std.objectFields(kp.prometheusAdapter) }
 */
 
-{ 'grafana-dashboardDefinitions': kp.grafana.dashboardDefinitions } + 
-// { 'prometheus-operator-prometheusRule': kp.prometheusOperator.prometheusRule } +
-{ 'kube-prometheus-prometheusRule': kp.kubePrometheus.prometheusRule } +
-// { 'alertmanager-prometheusRule': kp.alertmanager.prometheusRule } +
-{ 'kube-state-metrics-prometheusRule': kp.kubeStateMetrics.prometheusRule } + 
-{ 'kubernetes-prometheusRule': kp.kubernetesControlPlane.prometheusRule } +
-{ 'node-exporter-prometheusRule': kp.nodeExporter.prometheusRule } +
-// { 'prometheus-prometheusRule': kp.prometheus.prometheusRule }+
-{ 'whizard-telemetry-prometheusRule': kp.whizardTelemetry.prometheusRule} 
+// recording rules filter
+local prometheusRulesWithoutAlerting(prometheusRule) = if prometheusRule.kind != 'PrometheusRule' then null
+  else {
+    apiVersion: prometheusRule.apiVersion,
+    kind: prometheusRule.kind,
+    metadata: prometheusRule.metadata,
+    spec: {
+      groups: [
+        {
+          name: group.name,
+          rules: [
+            rule for rule in group.rules if !("alert" in rule)
+          ],
+
+        } for group in prometheusRule.spec.groups
+      ],
+    },
+  };
+
+local prometheusRulesRemoveNullGroup(prometheusRule) = if prometheusRule.kind != 'PrometheusRule' then null
+  else {
+    apiVersion: prometheusRule.apiVersion,
+    kind: prometheusRule.kind,
+    metadata: prometheusRule.metadata,
+    spec: {
+      groups: [
+        group for group in prometheusRule.spec.groups if group.rules != []
+      ],
+    },
+  };
+
+
+    
+// { 'prometheus-operator-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.prometheusOperator.prometheusRule)) } +
+{ 'kube-prometheus-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.kubePrometheus.prometheusRule)) } +
+// { 'alertmanager-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.alertmanager.prometheusRule)) } +
+// { 'kube-state-metrics-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.kubeStateMetrics.prometheusRule)) } + 
+{ 'kubernetes-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.kubernetesControlPlane.prometheusRule)) } +
+{ 'node-exporter-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.nodeExporter.prometheusRule)) } +
+// { 'prometheus-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.prometheus.prometheusRule)) }+
+{ 'whizard-telemetry-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.whizardTelemetry.prometheusRule)) }
+
+
