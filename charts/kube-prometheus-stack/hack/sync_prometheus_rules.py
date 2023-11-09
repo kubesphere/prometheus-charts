@@ -29,82 +29,93 @@ def change_style(style, representer):
 
 # Source files list
 charts = [
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/alertmanager-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubePrometheus-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubernetesControlPlane-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubeStateMetrics-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/nodeExporter-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/prometheus-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/prometheusOperator-prometheusRule.yaml',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0'
+    # },
+    # {
+    #     'source': 'https://raw.githubusercontent.com/etcd-io/etcd/main/contrib/mixin/mixin.libsonnet',
+    #     'destination': '../templates/prometheus/rules-1.14',
+    #     'min_kubernetes': '1.14.0-0',
+    #     'is_mixin': True
+    # },
+
+
     {
-        'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/alertmanager-prometheusRule.yaml',
+        'source': 'file://../../../ks-prometheus/manifests/kube-prometheus-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
     },
     {
-        'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubePrometheus-prometheusRule.yaml',
+        'source': 'file://../../../ks-prometheus/manifests/kubernetes-prometheusRule.yaml',
+        'destination': '../templates/prometheus/rules-1.14',
+        'min_kubernetes': '1.14.0-0'
+    },  
+    {
+        'source': 'file://../../../ks-prometheus/manifests/node-exporter-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
     },
     {
-        'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubernetesControlPlane-prometheusRule.yaml',
+        'source': 'file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
-    },
-    {
-        'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubeStateMetrics-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
-    {
-        'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/nodeExporter-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
-    {
-        'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/prometheus-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
-    {
-        'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/prometheusOperator-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
-    {
-        'git': 'https://github.com/etcd-io/etcd.git',
-        'source': 'contrib/mixin/mixin.libsonnet',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0',
-        'is_mixin': True,
-        'mixin_vars': {'_config+': {}}
     },
 ]
 
 # Additional conditions map
 condition_map = {
-    'alertmanager.rules': ' .Values.defaultRules.rules.alertmanager',
-    'config-reloaders': ' .Values.defaultRules.rules.configReloaders',
-    'etcd': ' .Values.kubeEtcd.enabled .Values.defaultRules.rules.etcd',
-    'general.rules': ' .Values.defaultRules.rules.general',
-    'k8s.rules': ' .Values.defaultRules.rules.k8s',
+    # kube-prometheus-prometheusRule.yaml
+    'kube-prometheus-general.rules': ' .Values.defaultRules.rules.kubePrometheusGeneral',
+    'kube-prometheus-node-recording.rules': ' .Values.defaultRules.rules.kubePrometheusNodeRecording',
+
+    # kubernetes-prometheusRule.yaml
     'kube-apiserver-availability.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverAvailability',
     'kube-apiserver-burnrate.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverBurnrate',
     'kube-apiserver-histogram.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverHistogram',
-    'kube-apiserver-slos': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverSlos',
-    'kube-prometheus-general.rules': ' .Values.defaultRules.rules.kubePrometheusGeneral',
-    'kube-prometheus-node-recording.rules': ' .Values.defaultRules.rules.kubePrometheusNodeRecording',
+    'k8s.rules': ' .Values.defaultRules.rules.k8s',
     'kube-scheduler.rules': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerRecording',
-    'kube-state-metrics': ' .Values.defaultRules.rules.kubeStateMetrics',
-    'kubelet.rules': ' .Values.kubelet.enabled .Values.defaultRules.rules.kubelet',
-    'kubernetes-apps': ' .Values.defaultRules.rules.kubernetesApps',
-    'kubernetes-resources': ' .Values.defaultRules.rules.kubernetesResources',
-    'kubernetes-storage': ' .Values.defaultRules.rules.kubernetesStorage',
-    'kubernetes-system': ' .Values.defaultRules.rules.kubernetesSystem',
-    'kubernetes-system-kube-proxy': ' .Values.kubeProxy.enabled .Values.defaultRules.rules.kubeProxy',
-    'kubernetes-system-apiserver': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-apiserver
-    'kubernetes-system-kubelet': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-kubelet
-    'kubernetes-system-controller-manager': ' .Values.kubeControllerManager.enabled .Values.defaultRules.rules.kubeControllerManager',
-    'kubernetes-system-scheduler': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerAlerting',
-    'node-exporter.rules': ' .Values.defaultRules.rules.nodeExporterRecording',
-    'node-exporter': ' .Values.defaultRules.rules.nodeExporterAlerting',
     'node.rules': ' .Values.defaultRules.rules.node',
-    'node-network': ' .Values.defaultRules.rules.network',
-    'prometheus-operator': ' .Values.defaultRules.rules.prometheusOperator',
-    'prometheus': ' .Values.defaultRules.rules.prometheus', # kube-prometheus >= 1.14 uses prometheus as group instead of prometheus.rules
+    'kubelet.rules': ' .Values.kubelet.enabled .Values.defaultRules.rules.kubelet',
+
+    # node-exporter-prometheusRule.yaml
+    'node-exporter.rules': ' .Values.defaultRules.rules.nodeExporterRecording',
+
+    # custom rules
+    'whizard-apiserver-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-cluster-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-node-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
 }
 
 alert_condition_map = {
@@ -443,45 +454,21 @@ def main():
     init_yaml_styles()
     # read the rules, create a new template file per group
     for chart in charts:
-        if 'git' in chart:
-            print("Clone %s" % chart['git'])
-            checkout_dir = os.path.basename(chart['git'])
-            shutil.rmtree(checkout_dir, ignore_errors=True)
-            subprocess.run(["git", "clone", chart['git'], "--branch", "main", "--single-branch", "--depth", "1", checkout_dir])
-            print("Generating rules from %s" % chart['source'])
+        print("Generating rules from %s" % chart['source'])
 
-            if chart.get('is_mixin'):
-                mixin_file = os.path.basename(chart['source'])
-                mixin_dir = checkout_dir + '/' + os.path.dirname(chart['source']) + '/'
-                if os.path.exists(mixin_dir + "jsonnetfile.json"):
-                    print("Running jsonnet-bundler, because jsonnetfile.json exists")
-                    subprocess.run(["jb", "install"], cwd=mixin_dir)
-
-                mixin_vars = json.dumps(chart['mixin_vars'])
-
-                print("Generating rules from %s" % mixin_file)
-                print("Change cwd to %s" % checkout_dir + '/' + os.path.dirname(chart['source']))
-                cwd = os.getcwd()
-                os.chdir(mixin_dir)
-                alerts = json.loads(_jsonnet.evaluate_snippet(mixin_file, '((import "%s") + %s).prometheusAlerts' % (mixin_file, mixin_vars), import_callback=jsonnet_import_callback))
-                os.chdir(cwd)
-            else:
-                with open(checkout_dir + '/' + chart['source'], "r") as f:
-                    raw_text = f.read()
-
-                alerts = yaml.full_load(raw_text)
-
+        if chart['source'].startswith("file://"):
+            f = open(chart['source'][7:])
+            raw_text = f.read()
         else:
-            print("Generating rules from %s" % chart['source'])
             response = requests.get(chart['source'])
             if response.status_code != 200:
                 print('Skipping the file, response code %s not equals 200' % response.status_code)
                 continue
             raw_text = response.text
-            if chart.get('is_mixin'):
-                alerts = json.loads(_jsonnet.evaluate_snippet(chart['source'], raw_text + '.prometheusAlerts'))
-            else:
-                alerts = yaml.full_load(raw_text)
+        if chart.get('is_mixin'):
+            alerts = json.loads(_jsonnet.evaluate_snippet(chart['source'], raw_text + '.prometheusAlerts'))
+        else:
+            alerts = yaml.full_load(raw_text)
 
         if ('max_kubernetes' not in chart):
             chart['max_kubernetes']="9.9.9-9"

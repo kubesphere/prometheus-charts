@@ -37,7 +37,7 @@ crds:
 ## Create default rules for monitoring the cluster
 ##
 defaultRules:
-  create: false
+  create: true
   rules:
     alertmanager: true
     etcd: true
@@ -68,6 +68,9 @@ defaultRules:
     prometheusOperator: true
     windows: true
 
+    # custom rule
+    whizardTelemetry: true
+
   ## Reduce app namespace alert scope
   appNamespacesTarget: ".*"
 
@@ -75,7 +78,9 @@ defaultRules:
   keepFiringFor: ""
 
   ## Labels for default rules
-  labels: {}
+  labels:
+    prometheus: k8s
+    role: alert-rules
   ## Annotations for default rules
   annotations: {}
 
@@ -3331,7 +3336,10 @@ prometheus:
     ## PrometheusRules to be selected for target discovery.
     ## If {}, select all PrometheusRules
     ##
-    ruleSelector: {}
+    ruleSelector:
+      matchLabels:
+        prometheus: k8s
+        role: alert-rules
     ## Example which select all PrometheusRules resources
     ## with label "prometheus" with values any of "example-rules" or "example-rules-2"
     # ruleSelector:

@@ -1,5 +1,5 @@
 {{- /*
-Generated from 'kube-apiserver-availability.rules' group from https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubernetesControlPlane-prometheusRule.yaml
+Generated from 'kube-apiserver-availability.rules' group from file://../../../ks-prometheus/manifests/kubernetes-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
@@ -22,8 +22,7 @@ metadata:
 {{- end }}
 spec:
   groups:
-  - interval: 3m
-    name: kube-apiserver-availability.rules
+  - name: kube-apiserver-availability.rules
     rules:
     - expr: avg_over_time(code_verb:apiserver_request_total:increase1h[30d]) * 24 * 30
       record: code_verb:apiserver_request_total:increase30d

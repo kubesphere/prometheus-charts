@@ -1,0 +1,67 @@
+{{- /*
+Generated from 'whizard-cluster-recording.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
+Do not change in-place! In order to change this file first read following link:
+https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
+*/ -}}
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.whizardTelemetry }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-cluster-recording.rules" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: whizard-cluster-recording.rules
+    rules:
+    - expr: |-
+        max by (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
+                kube_pod_info * on (cluster, namespace) group_left (workspace) (kube_namespace_labels)
+              * on (cluster, namespace, pod) group_left (workload, workload_type)
+                (
+                    label_join(
+                      label_join(
+                        kube_pod_owner{owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
+                        "workload",
+                        "$1",
+                        "owner_kind"
+                      ),
+                      "workload_type",
+                      "$1",
+                      "owner_name"
+                    )
+                  or
+                      kube_pod_owner{owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
+                    * on (namespace, pod) group_left (workload_type, workload)
+                      namespace_workload_pod:kube_pod_owner:relabel
+                )
+            * on (cluster, namespace, pod) group_left (qos_class)
+              (kube_pod_status_qos_class > 0)
+          * on (cluster, node) group_left (role)
+            (
+                (kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"})
+              or
+                kube_node_role{role="control-plane"}
+            )
+        )
+      record: 'workspace_workload_node:kube_pod_info:'
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+{{- end }}
