@@ -75,6 +75,10 @@ The longest name that gets created adds and extra 37 characters, so truncation s
 {{- default (printf "%s-thanos-ruler" (include "kube-prometheus-stack.name" .)) .Values.thanosRuler.name -}}
 {{- end }}
 
+{{/* ThanosRuler custom resource instance name */}}
+{{- define "kube-prometheus-stack.thanosRuler.crname" -}}
+{{- default (printf "" (include "kube-prometheus-stack.name" .)) .Values.thanosRuler.crname -}}
+{{- end }}
 
 {{/* Create chart name and version as used by the chart label. */}}
 {{- define "kube-prometheus-stack.chartref" -}}

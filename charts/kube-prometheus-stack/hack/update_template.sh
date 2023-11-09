@@ -5,9 +5,11 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 # update_templates 替换 {{ template "kube-prometheus-stack.name" . }}-<template> 为 {{ template "kube-prometheus-stack.<template>.heritageName" . }}, 为了使用先前保留的名称
 update_templates(){
-    echo "Replace prometheus-operator deployment name"
+    echo "Replace prometheus-operator deployment name and thanos-ruler"
     if [[ $(uname -s) = "Darwin" ]]; then
         sed -i '' "7s/{{ template \"kube-prometheus-stack.fullname\" . }}-operator/{{ template \"kube-prometheus-stack.prometheus-operator.heritageName\" . }}/" ${SCRIPT_DIR}/../templates/prometheus-operator/deployment.yaml
+        sed -i '' "5s/{{ template \"kube-prometheus-stack.thanosRuler.name\" . }}/{{ template \"kube-prometheus-stack.thanosRuler.crname\" . }}/" ${SCRIPT_DIR}/../templates/thanos-ruler/ruler.yaml
+        sed -i '' "s/{{ toYaml .Values.thanosRuler.thanosRulerSpec.containers | indent 4 }}/{{ tpl (toYaml .Values.thanosRuler.thanosRulerSpec.containers | indent 4 ) . }}/g" ${SCRIPT_DIR}/../templates/thanos-ruler/ruler.yaml
         # find ${SCRIPT_DIR}/../templates/  -type f -name "*.yaml" -exec sed -i '' "s/{{ template \"kube-prometheus-stack.fullname\" . }}-${template}/{{ template \"kube-prometheus-stack.${template}.heritageName\" . }}/g" {} +
     else
         sed -i "7s/{{ template \"kube-prometheus-stack.fullname\" . }}-operator/{{ template \"kube-prometheus-stack.prometheus-operator.heritageName\" . }}/" ${SCRIPT_DIR}/../templates/prometheus-operator/deployment.yaml
