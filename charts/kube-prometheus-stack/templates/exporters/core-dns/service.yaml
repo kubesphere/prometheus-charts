@@ -1,18 +1,10 @@
-{{- if and .Values.coreDns.enabled .Values.coreDns.service.create }}
+{{- if and .Values.coreDns.enabled .Values.kubernetesServiceMonitors.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: coredns
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-coredns
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    k8s-app: kube-dns
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-coredns
-    {{- end }}
     jobLabel: coredns
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
   namespace: kube-system

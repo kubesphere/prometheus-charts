@@ -4,29 +4,17 @@
 apiVersion: v1
 kind: List
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: alertmanager-{{ include "alertmanager.heritageName" . }}-serviceperreplica
-  {{- else }}
   name: {{ include "kube-prometheus-stack.fullname" $ }}-alertmanager-serviceperreplica
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
 items:
 {{- range $i, $e := until $count }}
   - apiVersion: v1
     kind: Service
     metadata:
-      {{- if .Values.heritageNameOverride }}
-      name: alertmanager-{{ include "alertmanager.heritageName" . }}-{{ $i }}
-      {{- else }}
       name: {{ include "kube-prometheus-stack.fullname" $ }}-alertmanager-{{ $i }}
-      {{- end }}
       namespace: {{ template "kube-prometheus-stack.namespace" $ }}
       labels:
-        {{- if .Values.heritageNameOverride }}
-        app: alertmanager-{{ include "alertmanager.heritageName" . }}
-        {{- else }}
         app: {{ include "kube-prometheus-stack.name" $ }}-alertmanager
-        {{- end }}
 {{ include "kube-prometheus-stack.labels" $ | indent 8 }}
       {{- if $serviceValues.annotations }}
       annotations:
@@ -54,13 +42,8 @@ items:
           targetPort: {{ $serviceValues.targetPort }}
       selector:
         app.kubernetes.io/name: alertmanager
-        {{- if .Values.heritageNameOverride }}
-        alertmanager: alertmanager-{{ include "alertmanager.heritageName" $ }}
-        statefulset.kubernetes.io/pod-name: alertmanager-{{ include "alertmanager.heritageName" $ }}-{{ $i }}
-        {{- else }}
         alertmanager: {{ template "kube-prometheus-stack.alertmanager.crname" $ }}
         statefulset.kubernetes.io/pod-name: alertmanager-{{ include "kube-prometheus-stack.alertmanager.crname" $ }}-{{ $i }}
-        {{- end }}
       type: "{{ $serviceValues.type }}"
 {{- end }}
 {{- end }}

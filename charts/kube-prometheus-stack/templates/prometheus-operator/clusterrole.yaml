@@ -2,17 +2,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: kubesphere-{{ include "prometheus-operator.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-operator
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: {{ include "prometheus-operator.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-operator
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 rules:
 - apiGroups:
@@ -20,12 +12,18 @@ rules:
   resources:
   - alertmanagers
   - alertmanagers/finalizers
+  - alertmanagers/status
   - alertmanagerconfigs
   - prometheuses
-  - prometheuses/status
   - prometheuses/finalizers
+  - prometheuses/status
+  - prometheusagents
+  - prometheusagents/finalizers
+  - prometheusagents/status
   - thanosrulers
   - thanosrulers/finalizers
+  - thanosrulers/status
+  - scrapeconfigs
   - servicemonitors
   - podmonitors
   - probes
@@ -86,4 +84,14 @@ rules:
   - get
   - list
   - watch
+{{- if .Capabilities.APIVersions.Has "discovery.k8s.io/v1/EndpointSlice" }}
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - get
+  - list
+  - watch
+{{- end }}
 {{- end }}

@@ -1,18 +1,10 @@
-{{- if and .Values.kubeScheduler.enabled .Values.kubeScheduler.endpoints }}
+{{- if and .Values.kubeScheduler.enabled .Values.kubeScheduler.endpoints .Values.kubernetesServiceMonitors.enabled }}
 apiVersion: v1
 kind: Endpoints
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: kube-scheduler-svc
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-kube-scheduler
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: kube-scheduler
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-kube-scheduler
-    {{- end }}
     k8s-app: kube-scheduler
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
   namespace: kube-system

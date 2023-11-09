@@ -9,16 +9,13 @@ items:
       name: {{ .name }}
       namespace: {{ template "kube-prometheus-stack.namespace" $ }}
       labels:
-        {{- if .Values.heritageNameOverride }}
-        app: prometheus-{{ include "prometheus.heritageName" $ }}
-        {{- else }}
         app: {{ template "kube-prometheus-stack.name" $ }}-prometheus
-        {{- end }}
 {{ include "kube-prometheus-stack.labels" $ | indent 8 }}
         {{- if .additionalLabels }}
 {{ toYaml .additionalLabels | indent 8 }}
         {{- end }}
     spec:
+      {{- include "servicemonitor.scrapeLimits" . | nindent 6 }}
       podMetricsEndpoints:
 {{ toYaml .podMetricsEndpoints | indent 8 }}
     {{- if .jobLabel }}

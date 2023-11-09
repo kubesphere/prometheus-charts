@@ -3,17 +3,9 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: alertmanager-{{ include "alertmanager.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: alertmanager-{{ include "alertmanager.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
-    {{- end }}
 {{- if .Values.global.rbac.pspAnnotations }}
   annotations:
 {{ toYaml .Values.global.rbac.pspAnnotations | indent 4 }}

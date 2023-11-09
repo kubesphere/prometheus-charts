@@ -1,18 +1,10 @@
-{{- if and .Values.kubeControllerManager.enabled .Values.kubeControllerManager.endpoints }}
+{{- if and .Values.kubeControllerManager.enabled .Values.kubeControllerManager.endpoints .Values.kubernetesServiceMonitors.enabled }}
 apiVersion: v1
 kind: Endpoints
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: kube-controller-manager-svc
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-kube-controller-manager
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: kube-controller-manager
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-kube-controller-manager
-    {{- end }}
     k8s-app: kube-controller-manager
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
   namespace: kube-system

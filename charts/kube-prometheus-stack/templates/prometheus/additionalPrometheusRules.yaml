@@ -2,11 +2,7 @@
 apiVersion: v1
 kind: List
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: prometheus-{{ include "prometheus.heritageName" $ }}-additional-prometheus-rules
-  {{- else }}
   name: {{ include "kube-prometheus-stack.fullname" $ }}-additional-prometheus-rules
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
 items:
 {{- if .Values.additionalPrometheusRulesMap }}
@@ -14,18 +10,10 @@ items:
   - apiVersion: monitoring.coreos.com/v1
     kind: PrometheusRule
     metadata:
-      {{- if .Values.heritageNameOverride }}
-      name: prometheus-{{ include "prometheus.heritageName" $ }}-{{ $prometheusRuleName }}
-      {{- else }}
       name: {{ template "kube-prometheus-stack.name" $ }}-{{ $prometheusRuleName }}
-      {{- end }}
       namespace: {{ template "kube-prometheus-stack.namespace" $ }}
       labels:
-        {{- if .Values.heritageNameOverride }}
-        name: prometheus-{{ include "prometheus.heritageName" $ }}
-        {{- else }}
         app: {{ template "kube-prometheus-stack.name" $ }}
-        {{- end }}
 {{ include "kube-prometheus-stack.labels" $ | indent 8 }}
     {{- if $prometheusRule.additionalLabels }}
 {{ toYaml $prometheusRule.additionalLabels | indent 8 }}
@@ -42,11 +30,7 @@ items:
       name: {{ template "kube-prometheus-stack.name" $ }}-{{ .name }}
       namespace: {{ template "kube-prometheus-stack.namespace" $ }}
       labels:
-        {{- if .Values.heritageNameOverride }}
-        app: prometheus-{{ include "prometheus.heritageName" $ }}
-        {{- else }}
         app: {{ template "kube-prometheus-stack.name" $ }}
-        {{- end }}
 {{ include "kube-prometheus-stack.labels" $ | indent 8 }}
     {{- if .additionalLabels }}
 {{ toYaml .additionalLabels | indent 8 }}
