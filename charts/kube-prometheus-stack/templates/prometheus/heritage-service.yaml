@@ -1,0 +1,41 @@
+{{- if and .Values.prometheus.enabled .Values.prometheus.heritageName}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.prometheus.heritageName }}
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}-prometheus
+{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.prometheus.service.labels }}
+{{ toYaml .Values.prometheus.service.labels | indent 4 }}
+{{- end }}
+{{- if .Values.prometheus.service.annotations }}
+  annotations:
+{{ toYaml .Values.prometheus.service.annotations | indent 4 }}
+{{- end }}
+spec:
+  ports:
+  - name: {{ .Values.prometheus.prometheusSpec.portName }}
+    port: {{ .Values.prometheus.service.port }}
+    targetPort: {{ .Values.prometheus.service.targetPort }}
+  - name: reloader-web
+    port: 8080
+    targetPort: reloader-web
+  {{- if .Values.prometheus.thanosIngress.enabled }}
+  - name: grpc
+    port: {{ .Values.prometheus.thanosIngress.servicePort }}
+    targetPort: {{ .Values.prometheus.thanosIngress.servicePort }}
+  {{- end }}
+  selector:
+    {{- if .Values.prometheus.agentMode }}
+    app.kubernetes.io/name: prometheus-agent
+    {{- else }}
+    app.kubernetes.io/name: prometheus
+    {{- end }}
+    operator.prometheus.io/name: {{ template "kube-prometheus-stack.prometheus.crname" . }}
+{{- if .Values.prometheus.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.prometheus.service.sessionAffinity }}
+{{- end }}
+  type: ClusterIP
+{{- end }}

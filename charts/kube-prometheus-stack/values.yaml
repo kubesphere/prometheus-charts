@@ -237,6 +237,8 @@ alertmanager:
   ## Deploy alertmanager
   ##
   enabled: true
+  crname: main
+  heritageName: alertmanager-main
 
   ## Annotations for Alertmanager
   ##
@@ -2025,6 +2027,7 @@ prometheus-node-exporter:
 ##
 prometheusOperator:
   enabled: true
+  heritageName: prometheus-operator
 
   ## Number of old replicasets to retain ##
   ## The default value is 10, 0 will garbage-collect old replicasets ##
@@ -2469,6 +2472,8 @@ prometheusOperator:
 ##
 prometheus:
   enabled: true
+  crname: k8s
+  heritageName: prometheus-k8s
 
   ## Toggle prometheus into agent mode
   ## Note many of features described below (e.g. rules, query, alerting, remote read, thanos) will not work in agent mode.

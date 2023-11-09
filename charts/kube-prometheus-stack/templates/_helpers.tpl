@@ -31,7 +31,9 @@ The longest name that gets created adds and extra 37 characters, so truncation s
 
 {{/* Prometheus custom resource instance name */}}
 {{- define "kube-prometheus-stack.prometheus.crname" -}}
-{{- if .Values.cleanPrometheusOperatorObjectNames }}
+{{- if .Values.prometheus.crname }}
+{{- .Values.prometheus.crname }}
+{{- else if .Values.cleanPrometheusOperatorObjectNames }}
 {{- include "kube-prometheus-stack.fullname" . }}
 {{- else }}
 {{- print (include "kube-prometheus-stack.fullname" .) "-prometheus" }}
@@ -45,10 +47,21 @@ The longest name that gets created adds and extra 37 characters, so truncation s
 
 {{/* Alertmanager custom resource instance name */}}
 {{- define "kube-prometheus-stack.alertmanager.crname" -}}
-{{- if .Values.cleanPrometheusOperatorObjectNames }}
+{{- if .Values.alertmanager.crname }}
+{{- .Values.alertmanager.crname }}
+{{- else if .Values.cleanPrometheusOperatorObjectNames }}
 {{- include "kube-prometheus-stack.fullname" . }}
 {{- else }}
 {{- print (include "kube-prometheus-stack.fullname" .) "-alertmanager" -}}
+{{- end }}
+{{- end }}
+
+{{/* Prometheus-Operator kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.prometheus-operator.heritageName" -}}
+{{- if .Values.prometheusOperator.heritageName }}
+{{- .Values.prometheusOperator.heritageName }}
+{{- else }}
+{{- printf "%s-operator" (include "kube-prometheus-stack.fullname" .) -}}
 {{- end }}
 {{- end }}
 
