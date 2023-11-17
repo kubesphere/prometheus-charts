@@ -2,18 +2,10 @@
 apiVersion: monitoring.coreos.com/v1
 kind: Alertmanager
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: {{ include "alertmanager.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.alertmanager.crname" . }}
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: alertmanager-{{ include "alertmanager.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.alertmanager.annotations }}
   annotations:
@@ -38,21 +30,13 @@ spec:
 {{- end }}
   replicas: {{ .Values.alertmanager.alertmanagerSpec.replicas }}
   listenLocal: {{ .Values.alertmanager.alertmanagerSpec.listenLocal }}
-  {{- if .Values.heritageNameOverride }}
-  serviceAccountName: alertmanager-{{ include "alertmanager.heritageName" . }}
-  {{- else }}
   serviceAccountName: {{ template "kube-prometheus-stack.alertmanager.serviceAccountName" . }}
-  {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.externalUrl }}
   externalUrl: "{{ tpl .Values.alertmanager.alertmanagerSpec.externalUrl . }}"
 {{- else if and .Values.alertmanager.ingress.enabled .Values.alertmanager.ingress.hosts }}
   externalUrl: "http://{{ tpl (index .Values.alertmanager.ingress.hosts 0) . }}{{ .Values.alertmanager.alertmanagerSpec.routePrefix }}"
 {{- else }}
-  {{- if .Values.heritageNameOverride }}
-  externalUrl: http://alertmanager-{{ include "alertmanager.heritageName" . }}.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.alertmanager.service.port }}
-  {{- else }}
   externalUrl: http://{{ template "kube-prometheus-stack.fullname" . }}-alertmanager.{{ template "kube-prometheus-stack.namespace" . }}:{{ .Values.alertmanager.service.port }}
-  {{- end }}
 {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.nodeSelector }}
   nodeSelector:
@@ -75,13 +59,13 @@ spec:
 {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.alertmanagerConfigSelector }}
   alertmanagerConfigSelector:
-{{ toYaml .Values.alertmanager.alertmanagerSpec.alertmanagerConfigSelector | indent 4}}
+{{ tpl (toYaml .Values.alertmanager.alertmanagerSpec.alertmanagerConfigSelector | indent 4) . }}
 {{ else }}
   alertmanagerConfigSelector: {}
 {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.alertmanagerConfigNamespaceSelector }}
   alertmanagerConfigNamespaceSelector:
-{{ toYaml .Values.alertmanager.alertmanagerSpec.alertmanagerConfigNamespaceSelector | indent 4}}
+{{ tpl (toYaml .Values.alertmanager.alertmanagerSpec.alertmanagerConfigNamespaceSelector | indent 4) . }}
 {{ else }}
   alertmanagerConfigNamespaceSelector: {}
 {{- end }}
@@ -92,6 +76,10 @@ spec:
 {{- if .Values.alertmanager.alertmanagerSpec.alertmanagerConfiguration }}
   alertmanagerConfiguration:
 {{ toYaml .Values.alertmanager.alertmanagerSpec.alertmanagerConfiguration | indent 4 }}
+{{- end }}
+{{- if .Values.alertmanager.alertmanagerSpec.alertmanagerConfigMatcherStrategy }}
+  alertmanagerConfigMatcherStrategy:
+{{ toYaml .Values.alertmanager.alertmanagerSpec.alertmanagerConfigMatcherStrategy | indent 4 }}
 {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.resources }}
   resources:
@@ -125,11 +113,7 @@ spec:
         labelSelector:
           matchExpressions:
             - {key: app.kubernetes.io/name, operator: In, values: [alertmanager]}
-            {{- if .Values.heritageNameOverride }}
-            - {key: alertmanager, operator: In, values: [{{ include "alertmanager.heritageName" . }}]}
-            {{- else }}
             - {key: alertmanager, operator: In, values: [{{ template "kube-prometheus-stack.alertmanager.crname" . }}]}
-            {{- end }}
 {{- else if eq .Values.alertmanager.alertmanagerSpec.podAntiAffinity "soft" }}
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
@@ -139,11 +123,7 @@ spec:
           labelSelector:
             matchExpressions:
               - {key: app.kubernetes.io/name, operator: In, values: [alertmanager]}
-              {{- if .Values.heritageNameOverride }}
-              - {key: alertmanager, operator: In, values: [{{ include "alertmanager.heritageName" . }}]}
-              {{- else }}
               - {key: alertmanager, operator: In, values: [{{ template "kube-prometheus-stack.alertmanager.crname" . }}]}
-              {{- end }}
 {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.tolerations }}
   tolerations:
@@ -184,10 +164,25 @@ spec:
 {{- if .Values.alertmanager.alertmanagerSpec.clusterAdvertiseAddress }}
   clusterAdvertiseAddress: {{ .Values.alertmanager.alertmanagerSpec.clusterAdvertiseAddress }}
 {{- end }}
+{{- if .Values.alertmanager.alertmanagerSpec.clusterGossipInterval }}
+  clusterGossipInterval: {{ .Values.alertmanager.alertmanagerSpec.clusterGossipInterval }}
+{{- end }}
+{{- if .Values.alertmanager.alertmanagerSpec.clusterPeerTimeout }}
+  clusterPeerTimeout: {{ .Values.alertmanager.alertmanagerSpec.clusterPeerTimeout }}
+{{- end }}
+{{- if .Values.alertmanager.alertmanagerSpec.clusterPushpullInterval }}
+  clusterPushpullInterval: {{ .Values.alertmanager.alertmanagerSpec.clusterPushpullInterval }}
+{{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.forceEnableClusterMode }}
   forceEnableClusterMode: {{ .Values.alertmanager.alertmanagerSpec.forceEnableClusterMode }}
 {{- end }}
 {{- if .Values.alertmanager.alertmanagerSpec.minReadySeconds }}
   minReadySeconds: {{ .Values.alertmanager.alertmanagerSpec.minReadySeconds }}
+{{- end }}
+{{- with .Values.alertmanager.alertmanagerSpec.additionalConfig }}
+  {{- tpl (toYaml .) $ | nindent 2 }}
+{{- end }}
+{{- with .Values.alertmanager.alertmanagerSpec.additionalConfigString }}
+  {{- tpl . $ | nindent 2 }}
 {{- end }}
 {{- end }}

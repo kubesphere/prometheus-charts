@@ -31,7 +31,9 @@ The longest name that gets created adds and extra 37 characters, so truncation s
 
 {{/* Prometheus custom resource instance name */}}
 {{- define "kube-prometheus-stack.prometheus.crname" -}}
-{{- if .Values.cleanPrometheusOperatorObjectNames }}
+{{- if .Values.prometheus.crname }}
+{{- .Values.prometheus.crname }}
+{{- else if .Values.cleanPrometheusOperatorObjectNames }}
 {{- include "kube-prometheus-stack.fullname" . }}
 {{- else }}
 {{- print (include "kube-prometheus-stack.fullname" .) "-prometheus" }}
@@ -45,16 +47,37 @@ The longest name that gets created adds and extra 37 characters, so truncation s
 
 {{/* Alertmanager custom resource instance name */}}
 {{- define "kube-prometheus-stack.alertmanager.crname" -}}
-{{- if .Values.cleanPrometheusOperatorObjectNames }}
+{{- if .Values.alertmanager.crname }}
+{{- .Values.alertmanager.crname }}
+{{- else if .Values.cleanPrometheusOperatorObjectNames }}
 {{- include "kube-prometheus-stack.fullname" . }}
 {{- else }}
 {{- print (include "kube-prometheus-stack.fullname" .) "-alertmanager" -}}
 {{- end }}
 {{- end }}
 
+{{/* Prometheus-Operator kubesphere heritage name */}}
+{{- define "kube-prometheus-stack.prometheus-operator.heritageName" -}}
+{{- if .Values.prometheusOperator.heritageName }}
+{{- .Values.prometheusOperator.heritageName }}
+{{- else }}
+{{- printf "%s-operator" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+{{- end }}
+
 {{/* Fullname suffixed with thanos-ruler */}}
 {{- define "kube-prometheus-stack.thanosRuler.fullname" -}}
 {{- printf "%s-thanos-ruler" (include "kube-prometheus-stack.fullname" .) -}}
+{{- end }}
+
+{{/* Shortened name suffixed with thanos-ruler */}}
+{{- define "kube-prometheus-stack.thanosRuler.name" -}}
+{{- default (printf "%s-thanos-ruler" (include "kube-prometheus-stack.name" .)) .Values.thanosRuler.name -}}
+{{- end }}
+
+{{/* ThanosRuler custom resource instance name */}}
+{{- define "kube-prometheus-stack.thanosRuler.crname" -}}
+{{- default (printf "" (include "kube-prometheus-stack.name" .)) .Values.thanosRuler.crname -}}
 {{- end }}
 
 {{/* Create chart name and version as used by the chart label. */}}
@@ -73,13 +96,6 @@ release: {{ $.Release.Name | quote }}
 heritage: {{ $.Release.Service | quote }}
 {{- if .Values.commonLabels}}
 {{ toYaml .Values.commonLabels }}
-{{- end }}
-{{- end }}
-
-{{/* Add Kubesphere monitor label */}}
-{{- define "kubesphere-monitor.labels" }}
-{{- if .Values.ksMonitorLabels }}
-{{ toYaml .Values.ksMonitorLabels }}
 {{- end }}
 {{- end }}
 
@@ -113,7 +129,7 @@ heritage: {{ $.Release.Service | quote }}
 {{/* Create the name of thanosRuler service account to use */}}
 {{- define "kube-prometheus-stack.thanosRuler.serviceAccountName" -}}
 {{- if .Values.thanosRuler.serviceAccount.create -}}
-    {{ default (include "kube-prometheus-stack.thanosRuler.fullname" .) .Values.thanosRuler.serviceAccount.name }}
+    {{ default (include "kube-prometheus-stack.thanosRuler.name" .) .Values.thanosRuler.serviceAccount.name }}
 {{- else -}}
     {{ default "default" .Values.thanosRuler.serviceAccount.name }}
 {{- end -}}
@@ -235,6 +251,25 @@ Use the prometheus-node-exporter namespace override for multi-namespace deployme
   {{- include "kube-prometheus-stack.kubeVersionDefaultValue" (list $values ">= 1.23-0" $insecure $secure $userValue) -}}
 {{- end -}}
 
+{{/* Sets default scrape limits for servicemonitor */}}
+{{- define "servicemonitor.scrapeLimits" -}}
+{{- with .sampleLimit }}
+sampleLimit: {{ . }}
+{{- end }}
+{{- with .targetLimit }}
+targetLimit: {{ . }}
+{{- end }}
+{{- with .labelLimit }}
+labelLimit: {{ . }}
+{{- end }}
+{{- with .labelNameLengthLimit }}
+labelNameLengthLimit: {{ . }}
+{{- end }}
+{{- with .labelValueLengthLimit }}
+labelValueLengthLimit: {{ . }}
+{{- end }}
+{{- end -}}
+
 {{/*
 To help compatibility with other charts which use global.imagePullSecrets.
 Allow either an array of {name: pullSecret} maps (k8s-style), or an array of strings (more common helm-style).
@@ -259,20 +294,3 @@ global:
   {{- end }}
 {{- end }}
 {{- end -}}
-
-
-{{/*
-Heritage names of the key resources in KubeSphere 3.x
-*/}}
-{{- define "prometheus-operator.heritageName" -}}
-{{- printf "prometheus-operator" -}}
-{{- end }}
-{{- define "prometheus.heritageName" -}}
-{{- printf "k8s" -}}
-{{- end }}
-{{- define "alertmanager.heritageName" -}}
-{{- printf "main" -}}
-{{- end }}
-{{- define "thanos-ruler.heritageName" -}}
-{{- printf "kubesphere" -}}
-{{- end }}

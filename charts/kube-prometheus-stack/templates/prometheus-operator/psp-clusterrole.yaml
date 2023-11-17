@@ -3,17 +3,9 @@
 kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: {{ include "prometheus-operator.heritageName" . }}-psp
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-operator-psp
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: {{ include "prometheus-operator.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-operator
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 rules:
 {{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
@@ -25,10 +17,6 @@ rules:
   resources: ['podsecuritypolicies']
   verbs:     ['use']
   resourceNames:
-  {{- if .Values.heritageNameOverride }}
-  - {{ include "prometheus-operator.heritageName" . }}
-  {{- else }}
   - {{ template "kube-prometheus-stack.fullname" . }}-operator
-  {{- end }}
 {{- end }}
 {{- end }}

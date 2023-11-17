@@ -3,17 +3,9 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: {{ include "prometheus-operator.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-operator
-  {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: {{ include "prometheus-operator.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-operator
-    {{- end }}
 {{- if .Values.global.rbac.pspAnnotations }}
   annotations:
 {{ toYaml .Values.global.rbac.pspAnnotations | indent 4 }}

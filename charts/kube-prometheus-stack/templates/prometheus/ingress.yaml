@@ -6,9 +6,6 @@
   {{- $paths := .Values.prometheus.ingress.paths | default $routePrefix -}}
   {{- $apiIsStable := eq (include "kube-prometheus-stack.ingress.isStable" .) "true" -}}
   {{- $ingressSupportsPathType := eq (include "kube-prometheus-stack.ingress.supportsPathType" .) "true" -}}
-  {{- if .Values.heritageNameOverride }}
-  {{- $serviceName = printf "prometheus-%s" (include "prometheus.heritageName" .) -}}
-  {{- end }}
 apiVersion: {{ include "kube-prometheus-stack.ingress.apiVersion" . }}
 kind: Ingress
 metadata:
@@ -19,11 +16,7 @@ metadata:
   name: {{ $serviceName }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: prometheus-{{ include "prometheus.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-prometheus
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.prometheus.ingress.labels }}
 {{ toYaml .Values.prometheus.ingress.labels | indent 4 }}

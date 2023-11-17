@@ -1,34 +1,22 @@
-{{- if and .Values.kubeEtcd.enabled .Values.kubeEtcd.serviceMonitor.enabled }}
+{{- if and .Values.kubeEtcd.enabled .Values.kubeEtcd.serviceMonitor.enabled .Values.kubernetesServiceMonitors.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: etcd
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-kube-etcd
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: etcd
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-kube-etcd
-    {{- end }}
   {{- with .Values.kubeEtcd.serviceMonitor.additionalLabels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
-{{- include "kubesphere-monitor.labels" . | indent 4 }}
 spec:
   jobLabel: jobLabel
+  {{- include "servicemonitor.scrapeLimits" .Values.kubeEtcd.serviceMonitor | nindent 4 }}
   selector:
     matchLabels:
-      {{- if .Values.heritageNameOverride }}
-      app: etcd
-      {{- else }}
       app: {{ template "kube-prometheus-stack.name" . }}-kube-etcd
       release: {{ $.Release.Name | quote }}
-      {{- end }}
   namespaceSelector:
     matchNames:
       - "kube-system"

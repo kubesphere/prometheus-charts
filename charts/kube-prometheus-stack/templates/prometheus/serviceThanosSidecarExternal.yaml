@@ -2,11 +2,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: prometheus-{{ include "prometheus.heritageName" . }}-thanos-external
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-thanos-external
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
@@ -46,9 +42,5 @@ spec:
     {{- end }}
   selector:
     app.kubernetes.io/name: prometheus
-    {{- if .Values.heritageNameOverride }}
-    promethesu: {{ include "prometheus.heritageName" . }}
-    {{- else }}
-    prometheus: {{ template "kube-prometheus-stack.prometheus.crname" . }}
-    {{- end }}
+    operator.prometheus.io/name: {{ template "kube-prometheus-stack.prometheus.crname" . }}
 {{- end }}

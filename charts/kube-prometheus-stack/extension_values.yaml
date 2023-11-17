@@ -18,7 +18,7 @@ alertmanager:
     image:
       registry: quay.io
       repository: prometheus/alertmanager
-      tag: v0.24.0 
+      tag: ""
     replicas: 1 
     resources:
       limits:
@@ -33,7 +33,7 @@ prometheus:
     image:
       registry: quay.io
       repository: prometheus/prometheus
-      tag: v2.40.5
+      tag: ""
     replicas: 1
     resources:
       limits:
@@ -53,7 +53,7 @@ prometheusOperator:
   image:
     registry: quay.io
     repository: prometheus-operator/prometheus-operator
-    tag: v0.61.1
+    tag: ""
   resources:
     limits:
       cpu: 200m
@@ -66,7 +66,7 @@ prometheusOperator:
     image:
       registry: quay.io
       repository: prometheus-operator/prometheus-config-reloader
-      tag: v0.61.1
+      tag: ""
       sha: ""
     resources:
       requests:
@@ -146,6 +146,7 @@ grafana:
       memory: 100Mi
   persistence:
     enabled: true
+    #storageClassName: default
     type: "pvc"
     size: 50Mi
 

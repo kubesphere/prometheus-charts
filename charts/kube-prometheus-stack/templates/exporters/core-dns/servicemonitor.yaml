@@ -1,34 +1,22 @@
-{{- if .Values.coreDns.enabled }}
+{{- if and .Values.coreDns.enabled .Values.kubernetesServiceMonitors.enabled }}
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: coredns
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-coredns
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: coredns
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-coredns
-    {{- end }}
   {{- with .Values.coreDns.serviceMonitor.additionalLabels }}
     {{- toYaml . | nindent 4 }}
   {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
-{{- include "kubesphere-monitor.labels" . | indent 4 }}
 spec:
   jobLabel: jobLabel
+  {{- include "servicemonitor.scrapeLimits" .Values.coreDns.serviceMonitor | nindent 2 }}
   selector:
     matchLabels:
-      {{- if .Values.heritageNameOverride }}
-      k8s-app: kube-dns
-      {{- else }}
       app: {{ template "kube-prometheus-stack.name" . }}-coredns
       release: {{ $.Release.Name | quote }}
-      {{- end }}
   namespaceSelector:
     matchNames:
       - "kube-system"

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Fetch alerting and aggregation rules from provided urls into this chart."""
 import json
+import os
 import re
+import shutil
+import subprocess
 import textwrap
-from os import makedirs
 
 import _jsonnet
 import requests
@@ -69,23 +71,9 @@ charts = [
     #     'is_mixin': True
     # },
 
-    # { 
-    #     'source': 'file://../../../ks-prometheus/manifests/alertmanager-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'file://../../../ks-prometheus/manifests/etcd-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
+
     {
         'source': 'file://../../../ks-prometheus/manifests/kube-prometheus-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },
-    {
-        'source': 'file://../../../ks-prometheus/manifests/kube-state-metrics-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
     },
@@ -93,27 +81,12 @@ charts = [
         'source': 'file://../../../ks-prometheus/manifests/kubernetes-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
-    },
-    # {
-    #     'source': 'file://../../../ks-prometheus/manifests/kubesphere-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },    
+    },  
     {
         'source': 'file://../../../ks-prometheus/manifests/node-exporter-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
         'min_kubernetes': '1.14.0-0'
     },
-    # {
-    #     'source': 'file://../../../ks-prometheus/manifests/prometheus-operator-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'file://../../../ks-prometheus/manifests/prometheus-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
     {
         'source': 'file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml',
         'destination': '../templates/prometheus/rules-1.14',
@@ -123,40 +96,26 @@ charts = [
 
 # Additional conditions map
 condition_map = {
-   # 'alertmanager.rules': ' .Values.defaultRules.rules.alertmanager',
-    'config-reloaders': ' .Values.defaultRules.rules.configReloaders',
-   # 'etcd': ' .Values.kubeEtcd.enabled .Values.defaultRules.rules.etcd',
-    'general.rules': ' .Values.defaultRules.rules.general',
-    'k8s.rules': ' .Values.defaultRules.rules.k8s',
+    # kube-prometheus-prometheusRule.yaml
+    'kube-prometheus-general.rules': ' .Values.defaultRules.rules.kubePrometheusGeneral',
+    'kube-prometheus-node-recording.rules': ' .Values.defaultRules.rules.kubePrometheusNodeRecording',
+
+    # kubernetes-prometheusRule.yaml
     'kube-apiserver-availability.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverAvailability',
     'kube-apiserver-burnrate.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverBurnrate',
     'kube-apiserver-histogram.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverHistogram',
-    'kube-apiserver-slos': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverSlos',
-    'kube-prometheus-general.rules': ' .Values.defaultRules.rules.kubePrometheusGeneral',
-    'kube-prometheus-node-recording.rules': ' .Values.defaultRules.rules.kubePrometheusNodeRecording',
+    'k8s.rules': ' .Values.defaultRules.rules.k8s',
     'kube-scheduler.rules': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerRecording',
-    'kube-state-metrics': ' .Values.defaultRules.rules.kubeStateMetrics',
-    'kubelet.rules': ' .Values.kubelet.enabled .Values.defaultRules.rules.kubelet',
-    'kubernetes-apps': ' .Values.defaultRules.rules.kubernetesApps',
-    'kubernetes-resources': ' .Values.defaultRules.rules.kubernetesResources',
-    'kubernetes-storage': ' .Values.defaultRules.rules.kubernetesStorage',
-    'kubernetes-system': ' .Values.defaultRules.rules.kubernetesSystem',
-    'kubernetes-system-kube-proxy': ' .Values.kubeProxy.enabled .Values.defaultRules.rules.kubeProxy',
-    'kubernetes-system-apiserver': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-apiserver
-    'kubernetes-system-kubelet': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-kubelet
-    'kubernetes-system-controller-manager': ' .Values.kubeControllerManager.enabled .Values.defaultRules.rules.kubeControllerManager',
-    'kubernetes-system-scheduler': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerAlerting',
-    'node-exporter.rules': ' .Values.defaultRules.rules.nodeExporterRecording',
-    'node-exporter': ' .Values.defaultRules.rules.nodeExporterAlerting',
     'node.rules': ' .Values.defaultRules.rules.node',
-    'node-network': ' .Values.defaultRules.rules.network',
-   # 'prometheus-operator': ' .Values.defaultRules.rules.prometheusOperator',
-   # 'prometheus': ' .Values.defaultRules.rules.prometheus', # kube-prometheus >= 1.14 uses prometheus as group instead of prometheus.rules
+    'kubelet.rules': ' .Values.kubelet.enabled .Values.defaultRules.rules.kubelet',
+
+    # node-exporter-prometheusRule.yaml
+    'node-exporter.rules': ' .Values.defaultRules.rules.nodeExporterRecording',
 
     # custom rules
-    'whizard-telemetry-apiserver-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-telemetry-cluster-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-telemetry-node-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-apiserver-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-cluster-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-node-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
 }
 
 alert_condition_map = {
@@ -215,18 +174,11 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: {{ print "%(name)s" | replace "_" "-" | trunc 63 | trimSuffix "-" }}
-  {{- else }}
   name: {{ printf "%%s-%%s" (include "kube-prometheus-stack.fullname" .) "%(name)s" | trunc 63 | trimSuffix "-" }}
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
-    {{- if .Values.heritageNameOverride }}
-    prometheus: {{ include "prometheus.heritageName" . }}
-    {{- end }}
-{{- include "kube-prometheus-stack.labels" . | indent 4 }}
+{{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.defaultRules.labels }}
 {{ toYaml .Values.defaultRules.labels | indent 4 }}
 {{- end }}
@@ -417,6 +369,28 @@ def add_custom_annotations(rules, group, indent=4):
 
     return rules
 
+
+def add_custom_keep_firing_for(rules, indent=4):
+    """Add if wrapper for additional rules annotations"""
+    indent_spaces = " " * indent + "  "
+    keep_firing_for = (indent_spaces + '{{- with .Values.defaultRules.keepFiringFor }}\n' +
+                        indent_spaces + 'keep_firing_for: "{{ . }}"\n' +
+                        indent_spaces + '{{- end }}')
+    keep_firing_for_len = len(keep_firing_for) + 1
+
+    separator = " " * indent + "  for:.*"
+    alerts_positions = re.finditer(separator, rules)
+    alert = 0
+
+    for alert_position in alerts_positions:
+        # Add rule_condition after 'annotations:' statement
+        index = alert_position.end() + keep_firing_for_len * alert
+        rules = rules[:index] + "\n" + keep_firing_for + rules[index:]
+        alert += 1
+
+    return rules
+
+
 def write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes):
     fix_expr(group['rules'])
     group_name = group['name']
@@ -431,8 +405,9 @@ def write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes)
             if replacement_map[line]['init']:
                 init_line += '\n' + replacement_map[line]['init']
     # append per-alert rules
-    # rules = add_custom_labels(rules, group)
-    # rules = add_custom_annotations(rules, group)
+    rules = add_custom_labels(rules, group)
+    rules = add_custom_annotations(rules, group)
+    rules = add_custom_keep_firing_for(rules)
     rules = add_rules_conditions_from_condition_map(rules)
     rules = add_rules_per_rule_conditions(rules, group)
     # initialize header
@@ -451,14 +426,11 @@ def write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes)
     # footer
     lines += '{{- end }}'
 
-    for rule in group['rules']:
-        if 'alert' in rule:
-            return 
     filename = group['name'] + '.yaml'
     new_filename = "%s/%s" % (destination, filename)
 
     # make sure directories to store the file exist
-    makedirs(destination, exist_ok=True)
+    os.makedirs(destination, exist_ok=True)
 
     # recreate the file
     with open(new_filename, 'w') as f:
@@ -510,6 +482,18 @@ def main():
     write_rules_names_template()
 
     print("Finished")
+
+
+def jsonnet_import_callback(base, rel):
+    if "github.com" in base:
+        base = os.getcwd() + '/vendor/' + base[base.find('github.com'):]
+    elif "github.com" in rel:
+        base = os.getcwd() + '/vendor/'
+
+    if os.path.isfile(base + rel):
+        return base + rel, open(base + rel).read().encode('utf-8')
+
+    raise RuntimeError('File not found')
 
 
 if __name__ == '__main__':

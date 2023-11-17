@@ -1,19 +1,12 @@
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
 {{- if .Values.alertmanager.enabled }}
 apiVersion: v1
 kind: Service
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: alertmanager-{{ include "alertmanager.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-alertmanager
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: alertmanager-{{ include "alertmanager.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-alertmanager
-    {{- end }}
     self-monitor: {{ .Values.alertmanager.serviceMonitor.selfMonitor | quote }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 {{- if .Values.alertmanager.service.labels }}
@@ -51,15 +44,20 @@ spec:
     port: {{ .Values.alertmanager.service.port }}
     targetPort: {{ .Values.alertmanager.service.targetPort }}
     protocol: TCP
+  - name: reloader-web
+    {{- if semverCompare ">=1.20.0-0" $kubeTargetVersion }}
+    appProtocol: http
+    {{- end }}
+    port: 8080
+    targetPort: reloader-web
 {{- if .Values.alertmanager.service.additionalPorts }}
 {{ toYaml .Values.alertmanager.service.additionalPorts | indent 2 }}
 {{- end }}
   selector:
     app.kubernetes.io/name: alertmanager
-    {{- if .Values.heritageNameOverride }}
-    alertmanager: {{ include "alertmanager.heritageName" . }}
-    {{- else }}
     alertmanager: {{ template "kube-prometheus-stack.alertmanager.crname" . }}
-    {{- end }}
+{{- if .Values.alertmanager.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.alertmanager.service.sessionAffinity }}
+{{- end }}
   type: "{{ .Values.alertmanager.service.type }}"
 {{- end }}

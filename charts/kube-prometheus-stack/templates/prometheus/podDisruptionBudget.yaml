@@ -2,18 +2,10 @@
 apiVersion: {{ include "kube-prometheus-stack.pdb.apiVersion" . }}
 kind: PodDisruptionBudget
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: prometheus-{{ include "prometheus.heritageName" . }}
-  {{- else }}
   name: {{ template "kube-prometheus-stack.fullname" . }}-prometheus
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: prometheus-{{ include "prometheus.heritageName" . }}
-    {{- else }}
     app: {{ template "kube-prometheus-stack.name" . }}-prometheus
-    {{- end }}
 {{ include "kube-prometheus-stack.labels" . | indent 4 }}
 spec:
   {{- if .Values.prometheus.podDisruptionBudget.minAvailable }}
@@ -24,10 +16,10 @@ spec:
   {{- end  }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: prometheus
-      {{- if .Values.heritageNameOverride }}
-      prometheus: {{ include "prometheus.heritageName" . }}
+      {{- if .Values.prometheus.agentMode }}
+      app.kubernetes.io/name: prometheus-agent
       {{- else }}
-      prometheus: {{ template "kube-prometheus-stack.prometheus.crname" . }}
+      app.kubernetes.io/name: prometheus
       {{- end }}
+      operator.prometheus.io/name: {{ template "kube-prometheus-stack.prometheus.crname" . }}
 {{- end }}

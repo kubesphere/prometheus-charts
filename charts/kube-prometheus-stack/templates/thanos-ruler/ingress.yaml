@@ -1,6 +1,6 @@
 {{- if and .Values.thanosRuler.enabled .Values.thanosRuler.ingress.enabled }}
 {{- $pathType := .Values.thanosRuler.ingress.pathType | default "ImplementationSpecific" }}
-{{- $serviceName := printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "thanos-ruler" }}
+{{- $serviceName := include "kube-prometheus-stack.thanosRuler.name" . }}
 {{- $servicePort := .Values.thanosRuler.service.port -}}
 {{- $routePrefix := list .Values.thanosRuler.thanosRulerSpec.routePrefix }}
 {{- $paths := .Values.thanosRuler.ingress.paths | default $routePrefix -}}
@@ -9,22 +9,14 @@
 apiVersion: {{ include "kube-prometheus-stack.ingress.apiVersion" . }}
 kind: Ingress
 metadata:
-  {{- if .Values.heritageNameOverride }}
-  name: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
-  {{- else }}
   name: {{ $serviceName }}
-  {{- end }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
 {{- if .Values.thanosRuler.ingress.annotations }}
   annotations:
 {{ toYaml .Values.thanosRuler.ingress.annotations | indent 4 }}
 {{- end }}
   labels:
-    {{- if .Values.heritageNameOverride }}
-    app: thanos-ruler-{{ include "thanos-ruler.heritageName" . }}
-    {{- else }}
-    app: {{ template "kube-prometheus-stack.name" . }}-thanos-ruler
-    {{- end }}
+    app: {{ template "kube-prometheus-stack.thanosRuler.name" . }}
 {{- if .Values.thanosRuler.ingress.labels }}
 {{ toYaml .Values.thanosRuler.ingress.labels | indent 4 }}
 {{- end }}
