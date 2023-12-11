@@ -6,7 +6,7 @@ keywords:
   - prometheus
   - exporter
 type: application
-version: 4.20.0
+version: 4.21.0
 appVersion: 1.6.0
 home: https://github.com/prometheus/node_exporter/
 sources:
@@ -23,3 +23,12 @@ annotations:
   "artifacthub.io/links": |
     - name: Chart Source
       url: https://github.com/prometheus-community/helm-charts
+dependencies:
+- condition: ProcessExporter.enabled
+  name: ProcessExporter
+  repository: file://charts/prometheus-process-exporter
+  version: 0.5.2
+- condition: CalicoExporter.enabled
+  name: CalicoExporter
+  repository: file://charts/calico-exporter
+  version: 0.2.0

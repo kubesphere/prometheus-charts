@@ -1,0 +1,57 @@
+apiVersion: alerting.kubesphere.io/v2beta1
+kind: GlobalRuleGroup
+metadata:
+  annotations:
+    alerting.kubesphere.io/initial-configuration: |
+      {"apiVersion":"alerting.kubesphere.io/v2beta1","kind":"GlobalRuleGroup","metadata":{"annotations":{},"labels":{"alerting.kubesphere.io/builtin":"true","alerting.kubesphere.io/enable":"true"},"name":"calico-bgp"},"spec":{"rules":[{"alert":"CalicoBGPRouterDown","annotations":{"description":"Calico BGP router {{ $labels.instance }} ({{ $labels.router_id }}) is down.","runbook_url":"https://alert-runbooks.kubesphere.io/runbooks/calico/calicobgprouterdown","summary":"Calico BGP router is down."},"expr":"calico_bgp_router_info{up=\"false\"} == 1\n","for":"5m","labels":{"rule_id":"6a9f0b8a4c7e4c9d8f3b5a6c0d8f9e7b"},"severity":"critical"},{"alert":"CalicoBGPPeerStateAbnormal","annotations":{"description":"Calico BGP peer {{ $labels.name }} ({{ $labels.ip }}) is not in established state.","runbook_url":"https://alert-runbooks.kubesphere.io/runbooks/calico/calicobgppeerstateabnormal","summary":"Calico BGP peer state is abnormal."},"expr":"calico_bgp_peer_info{bgp_state!=\"Established\"} == 1\n","for":"5m","labels":{"rule_id":"8f7c4f0a9d6a4b0c9f3a7b8c6d7f8e9c"},"severity":"warning"},{"alert":"CalicoBGPPeerBirdStateDown","annotations":{"description":"Calico BGP peer {{ $labels.name }} ({{ $labels.ip }}) has bird state down.","runbook_url":"https://alert-runbooks.kubesphere.io/runbooks/calico/calicobgppeerbirdstatedown","summary":"Calico BGP peer bird state is down."},"expr":"calico_bgp_peer_info{bird_state!=\"up\"} == 1\n","for":"5m","labels":{"rule_id":"9d6b4e1a8c7b4c0d8f3b7a6c0d8f9e7d"},"severity":"critical"},{"alert":"CalicoIPPoolUsageHigh","annotations":{"description":"Calico IP pool {{ $labels.name }} ({{ $labels.cidr }}) has {{ $value | humanizePercentage }} of IPs allocated.","runbook_url":"https://alert-runbooks.kubesphere.io/runbooks/calico/calicopoolusagehigh","summary":"Calico IP pool usage is high."},"expr":"calico_ippool_allocated_ips / calico_ippool_capacity \u003e= 0.9\n","for":"5m","labels":{"rule_id":"a7b8c9d0e1f2g3h4i5j6k7l8m9n0o1p2"},"severity":"warning"}]}}
+  labels:
+    alerting.kubesphere.io/builtin: "true"
+    alerting.kubesphere.io/enable: "true"
+  name: calico-bgp
+  namespace: kubesphere-monitoring-system
+spec:
+  rules:
+    - alert: CalicoBGPRouterDown
+      annotations:
+        description: 'Calico BGP router {{ $labels.instance }} ({{ $labels.router_id }}) is down.'
+        runbook_url: https://alert-runbooks.kubesphere.io/runbooks/calico/calicobgprouterdown
+        summary: Calico BGP router is down.
+      expr: |
+        calico_bgp_router_info{up="false"} == 1
+      for: 5m
+      labels:
+        rule_id: 6a9f0b8a4c7e4c9d8f3b5a6c0d8f9e7b
+      severity: critical
+    - alert: CalicoBGPPeerStateAbnormal
+      annotations:
+        description: 'Calico BGP peer {{ $labels.name }} ({{ $labels.ip }}) is not in established state.'
+        runbook_url: https://alert-runbooks.kubesphere.io/runbooks/calico/calicobgppeerstateabnormal
+        summary: Calico BGP peer state is abnormal.
+      expr: |
+        calico_bgp_peer_info{bgp_state!="Established"} == 1
+      for: 5m
+      labels:
+        rule_id: 8f7c4f0a9d6a4b0c9f3a7b8c6d7f8e9c
+      severity: warning
+    - alert: CalicoBGPPeerBirdStateDown
+      annotations:
+        description: 'Calico BGP peer {{ $labels.name }} ({{ $labels.ip }}) has bird state down.'
+        runbook_url: https://alert-runbooks.kubesphere.io/runbooks/calico/calicobgppeerbirdstatedown
+        summary: Calico BGP peer bird state is down.
+      expr: |
+        calico_bgp_peer_info{bird_state!="up"} == 1
+      for: 5m
+      labels:
+        rule_id: 9d6b4e1a8c7b4c0d8f3b7a6c0d8f9e7d
+      severity: critical
+    - alert: CalicoIPPoolUsageHigh
+      annotations:
+        description: 'Calico IP pool {{ $labels.name }} ({{ $labels.cidr }}) has {{ $value | humanizePercentage }} of IPs allocated.'
+        runbook_url: https://alert-runbooks.kubesphere.io/runbooks/calico/calicopoolusagehigh
+        summary: Calico IP pool usage is high.
+      expr: |
+        calico_ippool_allocated_ips / calico_ippool_capacity >= 0.9
+      for: 5m
+      labels:
+        rule_id: a7b8c9d0e1f2g3h4i5j6k7l8m9n0o1p2
+      severity: warning

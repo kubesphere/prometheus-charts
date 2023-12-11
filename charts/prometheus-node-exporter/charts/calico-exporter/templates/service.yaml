@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "calico-exporter.fullname" . }}-bgp
+  labels:
+    {{- include "calico-exporter.bgp-collector.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: https-metrics
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+  selector:
+    {{- include "calico-exporter.bgp-collector.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "calico-exporter.fullname" . }}-ippool
+  labels:
+    {{- include "calico-exporter.ippool-collector.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: https-metrics
+      port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+  selector:
+    {{- include "calico-exporter.ippool-collector.selectorLabels" . | nindent 4 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "calico-exporter.fullname" . }}-ipam
+  labels:
+    {{- include "calico-exporter.kube-controllers.labels" . | nindent 4 }}
+  namespace: kube-system
+spec:
+  type: {{ .Values.calicoService.type }}
+  ports:
+    - name: http-metrics
+      port: {{ .Values.calicoService.port }}
+      targetPort: {{ .Values.calicoService.targetPort }}
+  selector:
+    {{- include "calico-exporter.kube-controllers.selectorLabels" . | nindent 4 }}

@@ -218,6 +218,12 @@ spec:
           {{ toYaml .Values.kubeRBACProxy.containerSecurityContext | nindent 12 }}
         {{- end }}
         {{- end }}
+        {{- if .Values.ProcessExporter.enabled }}
+        {{- include "prometheus-process-exporter.daemonset.containers" . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.CalicoExporter.enabled }}
+        {{- include "calico-exporter.daemonset.containers" . | nindent 8 }}
+        {{- end }}
       {{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
       imagePullSecrets:
         {{- include "prometheus-node-exporter.imagePullSecrets" (dict "Values" .Values "imagePullSecrets" .Values.imagePullSecrets) | indent 8 }}
@@ -281,4 +287,10 @@ spec:
         - name: kube-rbac-proxy-config
           configMap:
             name: {{ template "prometheus-node-exporter.fullname" . }}-rbac-config
+        {{- end }}
+        {{- if .Values.ProcessExporter.enabled }}
+        {{- include "prometheus-process-exporter.daemonset.volumes" . | nindent 8 }}
+        {{- end }}
+        {{- if .Values.CalicoExporter.enabled }}
+        {{- include "calico-exporter.daemonset.volumes" . | nindent 8 }}
         {{- end }}
