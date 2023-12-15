@@ -489,7 +489,7 @@ nginx:
 # prometheus process exporter configuration
 ProcessExporter:
   enabled: false
-  nameOverride: "process-exporter"
+  fullnameOverride: "process-exporter"
 
   # Default values for prometheus-process-exporter.
   # This is a YAML-formatted file.
@@ -629,7 +629,7 @@ ProcessExporter:
 # calico exporter configuration
 CalicoExporter:
   enabled: false
-  nameOverride: "calico-exporter"
+  fullnameOverride: "calico-exporter"
   # Default values for calico-exporter.
   # This is a YAML-formatted file.
   # Declare variables to be passed into your templates.

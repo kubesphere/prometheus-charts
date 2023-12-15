@@ -23,9 +23,14 @@ spec:
           sourceLabels:
             - __meta_kubernetes_pod_node_name
           targetLabel: instance
+        - action: replace
+          regex: (.*)
+          replacement: "calico-exporter-bgp"
+          sourceLabels:
+            - job
+          targetLabel: job
       tlsConfig:
         insecureSkipVerify: true
-  jobLabel: "{{ .Release.Name }}-bgp"
   selector:
     matchLabels:
       {{- include "calico-exporter.bgp-collector.selectorLabels" . | nindent 6 }}
@@ -57,7 +62,6 @@ spec:
           targetLabel: instance
       tlsConfig:
         insecureSkipVerify: true
-  jobLabel: "{{ .Release.Name }}-ippool"
   selector:
     matchLabels:
       {{- include "calico-exporter.ippool-collector.selectorLabels" . | nindent 6 }}
@@ -97,7 +101,6 @@ spec:
           targetLabel: instance
       tlsConfig:
         insecureSkipVerify: true
-  jobLabel: "{{ .Release.Name }}-ipam"
   selector:
     matchLabels:
       {{- include "calico-exporter.kube-controllers.selectorLabels" . | nindent 6 }}

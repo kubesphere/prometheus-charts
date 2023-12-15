@@ -32,7 +32,12 @@ spec:
         sourceLabels:
           - __meta_kubernetes_pod_node_name
         targetLabel: node
-  jobLabel: "{{ .Release.Name }}"
+      - action: replace
+        regex: (.*)
+        replacement: "process-exporter"
+        sourceLabels:
+          - job
+        targetLabel: job
   selector:
     matchLabels:
       {{- include "prometheus-process-exporter.selectorLabels" . | nindent 6 }}

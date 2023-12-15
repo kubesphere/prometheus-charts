@@ -7,7 +7,7 @@ metadata:
   labels:
     alerting.kubesphere.io/builtin: "true"
     alerting.kubesphere.io/enable: "true"
-  name: calico-bgp
+  name: calico-exporter-rules
 spec:
   rules:
     - alert: CalicoBGPRouterDown
