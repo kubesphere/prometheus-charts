@@ -2,23 +2,6 @@
 # Containers for the prometheus-process-exporter daemonset.
 */}}
 {{- define "prometheus-process-exporter.daemonset.containers" -}}
-- name: kube-rbac-proxy-process-exporter
-  args:
-    - --logtostderr
-    - --secure-listen-address=0.0.0.0:{{ .Values.ProcessExporter.service.targetPort }}
-    - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
-    - --upstream=http://127.0.0.1:{{ .Values.ProcessExporter.service.innerPort }}/
-
-  image: "{{ .Values.ProcessExporter.kubeRbacProxy.image }}:{{ .Values.ProcessExporter.kubeRbacProxy.tag }}"
-  ports:
-    - containerPort: {{ .Values.ProcessExporter.service.targetPort }}
-      name: https-metrics
-  resources:
-{{ toYaml .Values.ProcessExporter.kubeRbacProxy.resources | indent 12 }}
-  securityContext:
-    runAsGroup: 65532
-    runAsNonRoot: true
-    runAsUser: 65532
 - name: process-exporter
   image: "{{ .Values.ProcessExporter.image.repository }}:{{ .Values.ProcessExporter.image.tag }}"
   imagePullPolicy: {{ .Values.ProcessExporter.image.pullPolicy }}

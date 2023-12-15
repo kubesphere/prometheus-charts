@@ -185,7 +185,11 @@ spec:
             {{- .Values.kubeRBACProxy.extraArgs | toYaml | nindent 12 }}
             {{-  end  }}
             - --secure-listen-address=:{{ .Values.service.port}}
+            {{- if or .Values.CalicoExporter.enabled .Values.ProcessExporter.enabled }}
+            - --upstream=http://127.0.0.1:{{ .Values.nginx.port }}/
+            {{- else }}
             - --upstream=http://127.0.0.1:{{ $servicePort }}/
+            {{- end }}
             - --proxy-endpoints-port=8888
             - --config-file=/etc/kube-rbac-proxy-config/config-file.yaml
           volumeMounts:
@@ -223,6 +227,22 @@ spec:
         {{- end }}
         {{- if .Values.CalicoExporter.enabled }}
         {{- include "calico-exporter.daemonset.containers" . | nindent 8 }}
+        {{- end }}
+        {{- if or .Values.CalicoExporter.enabled .Values.ProcessExporter.enabled }}
+        - name: nginx
+          image: {{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}
+          imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
+          ports:
+          - name: nginx
+            containerPort: {{ .Values.nginx.port }}
+            protocol: TCP
+          volumeMounts:
+          - name: nginx-config
+            mountPath: /etc/nginx/conf.d
+          {{- if .Values.nginx.resources }}
+          resources:
+          {{- toYaml .Values.nginx.resources | nindent 12 }}
+          {{- end }}
         {{- end }}
       {{- if or .Values.imagePullSecrets .Values.global.imagePullSecrets }}
       imagePullSecrets:
@@ -293,4 +313,9 @@ spec:
         {{- end }}
         {{- if .Values.CalicoExporter.enabled }}
         {{- include "calico-exporter.daemonset.volumes" . | nindent 8 }}
+        {{- end }}
+        {{- if or .Values.CalicoExporter.enabled .Values.ProcessExporter.enabled }}
+        - name: nginx-config
+          configMap:
+            name: {{ template "prometheus-node-exporter.fullname" . }}-nginx-config
         {{- end }}

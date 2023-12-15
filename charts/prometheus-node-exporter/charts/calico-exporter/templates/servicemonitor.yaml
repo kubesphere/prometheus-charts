@@ -13,8 +13,8 @@ spec:
       scrapeTimeout: "{{ .Values.serviceMonitor.scrapeTimeout }}"
       interval: "{{ .Values.serviceMonitor.interval }}"
       honorLabels: true
-      port: https-metrics
-      path: /metrics
+      port: metrics
+      path: /metrics/calico
       scheme: https
       relabelings:
         - action: replace
@@ -28,8 +28,7 @@ spec:
   jobLabel: "{{ .Release.Name }}-bgp"
   selector:
     matchLabels:
-      app.kubernetes.io/component: bgp-collector
-      {{- include "calico-exporter.selectorLabels" . | nindent 6 }}
+      {{- include "calico-exporter.bgp-collector.selectorLabels" . | nindent 6 }}
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
