@@ -245,7 +245,7 @@ alertmanager:
 
   ## Deploy alertmanager
   ##
-  enabled: true
+  enabled: false
   crname: main
   heritageName: alertmanager-main
 
@@ -1294,6 +1294,10 @@ kubelet:
     ## https://github.com/prometheus-operator/prometheus-operator/issues/926
     ##
     https: true
+
+    # Keep labels from scraped data, overriding server-side labels
+    ##
+    honorLabels: true
 
     ## Enable scraping /metrics/cadvisor from kubelet's service
     ##
@@ -4021,7 +4025,7 @@ thanosRuler:
 
   ## Deploy thanosRuler
   ##
-  enabled: true
+  enabled: false
   name: thanos-ruler-kubesphere
   crname: kubesphere
 
