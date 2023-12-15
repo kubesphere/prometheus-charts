@@ -1,0 +1,104 @@
+# Default values for calico-exporter.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+image:
+  repository: kubesphere/calico-exporter
+  tag: v0.2.0
+  pullPolicy: IfNotPresent
+
+## Creates a Prometheus Operator ServiceMonitor
+serviceMonitor:
+  scrapeTimeout: "30s"
+  enabled: true
+  interval: "30s"
+  labels:
+    app.kubernetes.io/vendor: kubesphere
+
+calicoService:
+  type: ClusterIP
+  port: 9094
+  targetPort: 9094
+  innerPort: 9094
+  nodePort:
+  annotations:
+    prometheus.io/scrape: "true"
+
+service:
+  type: ClusterIP
+  port: 9094
+  targetPort: 9094
+  innerPort: 9093
+  nodePort:
+  annotations:
+    prometheus.io/scrape: "true"
+
+# Labels to add to the pod
+podLabels: {}
+
+# Annotations to add to the pod
+podAnnotations: {}
+
+# Set to Kubernetes default updateStrategy by default.
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+
+resources:
+  #   We usually recommend not to specify default resources and to leave this as a conscious
+  #   choice for the user. This also increases chances charts run on environments with little
+  #   resources, such as Minikube. If you do want to specify resources, uncomment the following
+  #   lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  limits:
+    cpu: 1
+    memory: 500Mi
+  requests:
+    cpu: 102m
+    memory: 180Mi
+
+serviceAccount:
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: calico-exporter
+  imagePullSecrets: []
+  # Specifies whether to automount API credentials for the ServiceAccount to the pods
+  automountServiceAccountToken: true
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+
+hostNetwork: false
+
+## Assign a group of affinity scheduling rules
+##
+affinity: {}
+#   nodeAffinity:
+#     requiredDuringSchedulingIgnoredDuringExecution:
+#       nodeSelectorTerms:
+#         - matchFields:
+#             - key: metadata.name
+#               operator: In
+#               values:
+#                 - target-host-name
+
+## Assign a nodeSelector if operating a hybrid cluster
+##
+nodeSelector: {}
+#   beta.kubernetes.io/arch: amd64
+#   beta.kubernetes.io/os: linux
+
+tolerations:
+  - effect: NoSchedule
+    operator: Exists
+
+kubeRbacProxy:
+  image: kubesphere/kube-rbac-proxy
+  tag: v0.11.0
+  resources:
+    limits:
+      cpu: 1
+      memory: 100Mi
+    requests:
+      cpu: 10m
+      memory: 20Mi

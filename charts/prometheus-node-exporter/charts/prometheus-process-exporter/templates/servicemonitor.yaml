@@ -1,0 +1,47 @@
+{{- if .Values.serviceMonitor.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ template "prometheus-process-exporter.fullname" . }}
+  labels:
+    chart: {{ template "prometheus-process-exporter.chart" . }}
+    app: {{ template "prometheus-process-exporter.name" . }}
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    {{- if .Values.serviceMonitor.labels }}
+    {{- toYaml .Values.serviceMonitor.labels | nindent 4 }}
+    {{- end }}
+spec:
+  endpoints:
+  - interval: "{{ .Values.serviceMonitor.interval }}"
+    {{- if .Values.serviceMonitor.scrapeTimeout }}
+    scrapeTimeout: "{{ .Values.serviceMonitor.scrapeTimeout }}"
+    {{- end }}
+    honorLabels: true
+    port: metrics
+    path: /metrics/process
+    scheme: https
+    tlsConfig:
+      insecureSkipVerify: true
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+    relabelings:
+      - action: replace
+        regex: (.*)
+        replacement: $1
+        sourceLabels:
+          - __meta_kubernetes_pod_node_name
+        targetLabel: node
+      - action: replace
+        regex: (.*)
+        replacement: "process-exporter"
+        sourceLabels:
+          - job
+        targetLabel: job
+  selector:
+    matchLabels:
+      {{- include "prometheus-process-exporter.selectorLabels" . | nindent 6 }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+{{- end }}

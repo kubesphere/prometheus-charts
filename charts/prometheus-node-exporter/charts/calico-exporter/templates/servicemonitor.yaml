@@ -1,0 +1,106 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    {{- include "calico-exporter.bgp-collector.labels" . | nindent 4 }}
+    {{- if .Values.serviceMonitor.labels }}
+    {{- toYaml .Values.serviceMonitor.labels | nindent 4 }}
+    {{- end }}
+  name: {{ include "calico-exporter.fullname" . }}-bgp
+spec:
+  endpoints:
+    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      scrapeTimeout: "{{ .Values.serviceMonitor.scrapeTimeout }}"
+      interval: "{{ .Values.serviceMonitor.interval }}"
+      honorLabels: true
+      port: metrics
+      path: /metrics/calico
+      scheme: https
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: instance
+        - action: replace
+          regex: (.*)
+          replacement: "calico-exporter-bgp"
+          sourceLabels:
+            - job
+          targetLabel: job
+      tlsConfig:
+        insecureSkipVerify: true
+  selector:
+    matchLabels:
+      {{- include "calico-exporter.bgp-collector.selectorLabels" . | nindent 6 }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    {{- include "calico-exporter.ippool-collector.labels" . | nindent 4 }}
+    {{- if .Values.serviceMonitor.labels }}
+    {{- toYaml .Values.serviceMonitor.labels | nindent 4 }}
+    {{- end }}
+  name: {{ include "calico-exporter.fullname" . }}-ippool
+spec:
+  endpoints:
+    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      scrapeTimeout: "{{ .Values.serviceMonitor.scrapeTimeout }}"
+      interval: "{{ .Values.serviceMonitor.interval }}"
+      honorLabels: true
+      port: https-metrics
+      path: /metrics
+      scheme: https
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: instance
+      tlsConfig:
+        insecureSkipVerify: true
+  selector:
+    matchLabels:
+      {{- include "calico-exporter.ippool-collector.selectorLabels" . | nindent 6 }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    {{- include "calico-exporter.kube-controllers.labels" . | nindent 4 }}
+    {{- if .Values.serviceMonitor.labels }}
+    {{- toYaml .Values.serviceMonitor.labels | nindent 4 }}
+    {{- end }}
+  name: {{ include "calico-exporter.fullname" . }}-ipam
+spec:
+  namespaceSelector:
+    matchNames:
+      - kube-system
+  endpoints:
+    - bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      scrapeTimeout: "{{ .Values.serviceMonitor.scrapeTimeout }}"
+      interval: "{{ .Values.serviceMonitor.interval }}"
+      honorLabels: true
+      port: http-metrics
+      path: /metrics
+      scheme: http
+      metricRelabelings:
+        - sourceLabels: [__name__]
+          regex: ipam_(.+)
+          replacement: calico_ipam_$1
+          targetLabel: __name__
+      relabelings:
+        - action: replace
+          regex: (.*)
+          replacement: $1
+          sourceLabels:
+            - __meta_kubernetes_pod_node_name
+          targetLabel: instance
+      tlsConfig:
+        insecureSkipVerify: true
+  selector:
+    matchLabels:
+      {{- include "calico-exporter.kube-controllers.selectorLabels" . | nindent 6 }}

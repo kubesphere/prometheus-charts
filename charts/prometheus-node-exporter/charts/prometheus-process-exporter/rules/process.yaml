@@ -1,0 +1,30 @@
+apiVersion: alerting.kubesphere.io/v2beta1
+kind: ClusterRuleGroup
+metadata:
+  labels:
+    alerting.kubesphere.io/builtin: "true"
+    alerting.kubesphere.io/enable: 'true'
+name: process-exporter-rules
+spec:
+  rules:
+    - alert: NamedprocessGroupExistsZombieThreads
+      expr: sum by(cluster,node,groupname,instance,job) (namedprocess_namegroup_states{state="Zombie",job="process-exporter"}) > 0
+      for: 10m
+      severity: error
+      annotations:
+        summary: The process group has zombie threads.
+        message: 'The {{ $labels.groupname }} process group on {{ $labels.node }} node has {{ $value }} zombie threads.'
+    - alert: ProcessExporterDown
+      expr: up{job="process-exporter"} == 0
+      for: 10m
+      severity: critical
+      annotations:
+        summary: Target is unreachable.
+        message: 'Process exporter target {{ $labels.instance }} is down.'
+    - alert: ProcessScrapeErrors
+      expr: increase(namedprocess_scrape_errors{job="process-exporter"}[5m]) > 0
+      for: 15m
+      severity: error
+      annotations:
+        summary: Process exporter has failed to scrape metrics.
+        message: 'Process exporter {{ $labels.instance }} has encountered {{ $value }} scrape errors in the last 5 minutes.'

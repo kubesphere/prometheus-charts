@@ -1,0 +1,70 @@
+#file: noinspection KubernetesUnknownValues
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "calico-exporter.fullname" . }}-ippool
+  labels: {{ include "calico-exporter.ippool-collector.labels" . | indent 4 }}
+spec:
+  selector:
+    matchLabels: {{ include "calico-exporter.ippool-collector.selectorLabels" . | indent 8 }}
+  template:
+    metadata:
+      labels: {{ include "calico-exporter.ippool-collector.labels" . | indent 8 }}
+    spec:
+      serviceAccountName: {{ template "calico-exporter.serviceAccountName" . }}
+{{- if .Values.securityContext }}
+      securityContext:
+{{ toYaml .Values.securityContext | indent 8 }}
+{{- end }}
+      containers:
+        - args:
+            - --logtostderr
+            - --secure-listen-address=0.0.0.0:{{ .Values.service.targetPort }}
+            - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
+            - --upstream=http://127.0.0.1:{{ .Values.service.innerPort }}/
+          image: "{{ .Values.kubeRbacProxy.image }}:{{ .Values.kubeRbacProxy.tag }}"
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+              name: https-metrics
+          resources:
+{{ toYaml .Values.kubeRbacProxy.resources | indent 12 }}
+          securityContext:
+            runAsGroup: 65532
+            runAsNonRoot: true
+            runAsUser: 65532
+        - name: calico-exporter
+          env:
+            - name: NODENAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --web.listen-address=127.0.0.1:{{ .Values.service.innerPort }}
+            - --collector.enable-collectors=ippool
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          volumeMounts:
+            - name: var-run-calico
+              mountPath: /var/run/calico
+{{- if .Values.hostNetwork }}
+      hostNetwork: {{ .Values.hostNetwork }}
+{{- end }}
+{{- if .Values.affinity }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+{{- end }}
+{{- if .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml .Values.nodeSelector | indent 8 }}
+{{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+      volumes:
+        - name: var-run-calico
+          hostPath:
+            path: /var/run/calico

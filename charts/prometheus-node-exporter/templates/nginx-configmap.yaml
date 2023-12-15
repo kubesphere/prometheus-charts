@@ -1,0 +1,24 @@
+{{- if or .Values.CalicoExporter.enabled .Values.ProcessExporter.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "prometheus-node-exporter.fullname" . }}-nginx-config
+data:
+  nginx.conf: |-
+    server {
+      listen {{ .Values.nginx.port }};
+      location / {
+          proxy_pass http://localhost:8100;
+      }
+      {{- if .Values.CalicoExporter.enabled }}
+      location /metrics/calico {
+          proxy_pass http://localhost:{{ .Values.CalicoExporter.service.innerPort }}/metrics;
+      }
+      {{- end }}
+      {{- if .Values.ProcessExporter.enabled }}
+      location /metrics/process {
+          proxy_pass http://localhost:{{ .Values.ProcessExporter.service.innerPort }}/metrics;
+      }
+      {{- end }}
+    }
+{{- end }}

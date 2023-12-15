@@ -1,0 +1,29 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "calico-exporter.fullname" . }}-calicoctl
+  labels:
+    {{- include "calico-exporter.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "calico-exporter.fullname" . }}-calicoctl
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "calico-exporter.serviceAccountName" . }}
+    namespace: '{{ .Release.Namespace }}'
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "calico-exporter.fullname" . }}-auth
+  labels:
+    {{- include "calico-exporter.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "calico-exporter.fullname" . }}-auth
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "calico-exporter.serviceAccountName" . }}
+    namespace: '{{ .Release.Namespace }}'
