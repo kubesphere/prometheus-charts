@@ -1,10 +1,10 @@
 apiVersion: alerting.kubesphere.io/v2beta1
-kind: ClusterRuleGroup
+kind: GlobalRuleGroup
 metadata:
   labels:
     alerting.kubesphere.io/builtin: "true"
     alerting.kubesphere.io/enable: 'true'
-name: process-exporter-rules
+  name: process-exporter-rules
 spec:
   rules:
     - alert: NamedprocessGroupExistsZombieThreads
