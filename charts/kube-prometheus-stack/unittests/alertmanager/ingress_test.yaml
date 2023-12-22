@@ -32,7 +32,7 @@ tests:
       - isKind:
           of: Ingress
       - isAPIVersion:
-          of: networking.k8s.io/v1beta1
+          of: networking.k8s.io/v1
   - it: should have apiVersion networking.k8s.io/v1 for k8s >= 1.22
     set:
       alertmanager.enabled: true

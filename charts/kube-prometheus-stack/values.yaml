@@ -1421,7 +1421,7 @@ kubelet:
     ##
     metricRelabelings:
       - action: keep
-        regex: kubelet_node_name|kubelet_running_container_count|kubelet_running_pod_count|kubelet_volume_stats.*|kubelet_pleg_relist_duration_seconds_.+
+        regex: kubelet_node_name|kubelet_running_container_count|kubelet_running_pod_count|kubelet_volume_stats.*|kubelet_pleg_relist_duration_seconds_.+|kubelet_certificate_manager_.+|kubelet_server_expiration_.+|kubelet_pod_worker_.+
         sourceLabels:
           - __name__
     # - sourceLabels: [__name__, image]
@@ -2026,7 +2026,6 @@ kube-state-metrics:
     - kube_replicaset_(status_.+|spec_.+)
     - kube_poddisruptionbudget_status_.+
     - kube_replicationcontroller_.+
-    - kube_node_info
     - kube_(hpa|replicaset|replicationcontroller)_.+_generation
     - kube_clusterrole_info
     - kube_clusterrolebinding_info
@@ -2242,7 +2241,7 @@ prometheus-node-exporter:
       ##
       metricRelabelings:
         - action: keep
-          regex: node_(uname|network)_info|node_cpu_.+|node_memory_Mem.+_bytes|node_memory_SReclaimable_bytes|node_memory_Cached_bytes|node_memory_Buffers_bytes|node_network_(.+_bytes_total|up)|node_network_.+_errs_total|node_nf_conntrack_entries.*|node_disk_.+_completed_total|node_disk_.+_bytes_total|node_filesystem_files|node_filesystem_files_free|node_filesystem_avail_bytes|node_filesystem_size_bytes|node_filesystem_free_bytes|node_filesystem_readonly|node_load.+|node_timex_offset_seconds
+          regex: node_(uname|network)_info|node_cpu_.+|node_memory_Mem.+_bytes|node_memory_SReclaimable_bytes|node_memory_Cached_bytes|node_memory_Buffers_bytes|node_network_(.+_bytes_total|up)|node_network_.+_errs_total|node_network_.+_packets_total|node_nf_conntrack_entries.*|node_disk_.+_completed_total|node_disk_.+_bytes_total|node_filesystem_files|node_filesystem_files_free|node_filesystem_avail_bytes|node_filesystem_size_bytes|node_filesystem_free_bytes|node_filesystem_readonly|node_load.+|node_timex_offset_seconds|node_timex_maxerror_seconds|node_timex_sync_status|node_filefd_allocated|node_filefd_maximum|node_md_disks|node_md_disks_required|node_textfile_scrape_error
           sourceLabels:
             - __name__
       # - sourceLabels: [__name__]
@@ -2274,7 +2273,7 @@ prometheus-node-exporter:
           - __meta_kubernetes_pod_host_ip
           targetLabel: host_ip
         - action: labeldrop
-          regex: (service|endpoint)
+          regex: (service|endpoint|container)
       # - sourceLabels: [__meta_kubernetes_pod_node_name]
       #   separator: ;
       #   regex: ^(.*)$
@@ -4474,7 +4473,7 @@ extraManifests:
         app.kubernetes.io/part-of: kube-prometheus
         app.kubernetes.io/vendor: kubesphere
       name: ks-apiserver
-      namespace: kubesphere-monitoring-system
+      namespace: '{{ include "kube-prometheus-stack.namespace" .}}'
     spec:
       endpoints:
       - interval: 1m
@@ -4497,7 +4496,7 @@ extraManifests:
         app.kubernetes.io/part-of: kube-prometheus
         app.kubernetes.io/vendor: kubesphere
       name: ks-controller-manager
-      namespace: kubesphere-monitoring-system
+      namespace: '{{ include "kube-prometheus-stack.namespace" . }}'
     spec:
       endpoints:
       - interval: 1m
