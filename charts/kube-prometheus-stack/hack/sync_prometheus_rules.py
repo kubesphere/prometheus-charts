@@ -113,9 +113,10 @@ condition_map = {
     'node-exporter.rules': ' .Values.defaultRules.rules.nodeExporterRecording',
 
     # custom rules
-    'whizard-apiserver-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-cluster-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-node-recording.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-apiserver.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-cluster.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-namespace.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-node.rules': ' .Values.defaultRules.rules.whizardTelemetry',
 }
 
 alert_condition_map = {

@@ -14,7 +14,7 @@
   prometheusRules+:: {
     groups+: [
       {
-        name: 'whizard-telemetry-cluster-recording.rules',
+        name: 'whizard-telemetry-cluster.rules',
         rules: [
           {
             // pod attribute tuple tuple (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, node_role, host_ip) ==> 1
@@ -56,7 +56,7 @@
         ],
       },
       {
-        name: 'whizard-telemetry-node-recording.rules',
+        name: 'whizard-telemetry-node.rules',
         rules: [
           {
             record: 'node:node_memory_utilisation:ratio',
@@ -64,6 +64,12 @@
               node:node_memory_bytes_used_total:sum / node:node_memory_bytes_total:sum
             ||| % $._config,
           },
+          {
+            record: 'node:node_memory_bytes_available:sum',
+            expr: |||
+              node:node_memory_bytes_total:sum - node:node_memory_bytes_used_total:sum
+            ||| % $._config,
+          }
           {
             record: 'node:node_memory_bytes_used_total:sum',
             expr: |||
@@ -80,6 +86,12 @@
             record: 'node:node_filesystem_utilisation:ratio',
             expr: |||
               node:node_filesystem_bytes_used_total:sum / node:node_filesystem_bytes_total:sum
+            ||| % $._config,
+          },
+          {
+            record: 'node:node_filesystem_avaliable_bytes_total:sum',
+            expr: |||
+              node:node_filesystem_bytes_total:sum - node:node_filesystem_bytes_used_total:sum
             ||| % $._config,
           },
           {
@@ -119,6 +131,12 @@
             record: 'node:node_pod_quota:sum',
             expr: |||
               sum by (cluster,node,host_ip,role)(kube_node_status_allocatable{resource="pods"} * on (cluster, node) (kube_node_status_condition{condition="Ready",status="true"}) * on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""}))
+            ||| % $._config,
+          },
+          {
+            record: 'node:pod_abnormal:ratio',
+            expr: |||
+              count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""} unless on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0)unless on (pod, namespace, cluster)((kube_pod_status_ready{condition="true",job="kube-state-metrics"} > 0)and on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics",phase="Running"} > 0))unless on (pod, namespace, cluster)kube_pod_container_status_waiting_reason{job="kube-state-metrics",reason="ContainerCreating"} > 0)/count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""}unless on (pod, namespace, cluster)kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"}> 0)
             ||| % $._config,
           },
           {
@@ -184,7 +202,69 @@
         ],
       },
       {
-        name: 'whizard-telemetry-apiserver-recording.rules',
+        name: 'whizard-telemetry-namespace.rules',
+        rules: [
+          {
+            record: 'namespace:workload_cpu_usage:sum',
+            expr: |||
+              sum by(cluster,namespace,workload,workload_type)(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+            ||| % $._config,
+          },
+          {
+            record: 'namespace:workload_memory_usage:sum',
+            expr: |||
+              sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+            ||| % $._config,
+          },
+          {
+            record: 'namespace:workload_memory_wo_cache_usage:sum',
+            expr: |||
+              sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+            ||| % $._config,
+          },
+          {
+            record: 'namespace:workload_net_bytes_received:sum_irate',
+            expr: |||
+              sum by (cluster, namespace,workload,workload_type) (irate(container_network_receive_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+            ||| % $._config,
+          },
+          {
+            record: 'namespace:workload_net_bytes_transmitted:sum_irate',
+            expr: |||
+              sum by (cluster, namespace,workload,workload_type) (irate(container_network_transmit_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+            ||| % $._config,
+          },
+          {
+            record: 'namespace:workload_unavalibled_replicas:ratio',
+            expr: |||
+              label_replace(sum(kube_daemonset_status_number_unavailable{job="kube-state-metrics"}) by (daemonset, namespace, %(clusterLabel)s) / sum(kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}) by (daemonset, namespace,%(clusterLabel)s), "workload", "$1", "deamonset", "(.*)")
+            ||| % $._config,
+            labels: {
+              workload_type: 'deamonset',
+            },
+          },
+          {
+            record: 'namespace:workload_unavalibled_replicas:ratio',
+            expr: |||
+              label_replace(sum(kube_deployment_status_replicas_unavailable{job="kube-state-metrics"}) by (deployment, namespace, %(clusterLabel)s) / sum(kube_deployment_spec_replicas{job="kube-state-metrics"}) by (deployment, namespace, %(clusterLabel)s), "workload", "$1", "deployment", "(.*)")
+            ||| % $._config,
+            labels: {
+              workload_type: 'deployment',
+            },
+          },
+          {
+            record: 'namespace:workload_unavalibled_replicas:ratio',
+            expr: |||
+              label_replace(1 - sum(kube_statefulset_status_replicas_ready{job="kube-state-metrics"}) by (statefulset, namespace, %(clusterLabel)s) / sum(kube_statefulset_status_replicas{job="kube-state-metrics"}) by (statefulset, namespace, %(clusterLabel)s), "workload", "$1", "statefulset", "(.*)")
+            ||| % $._config,
+            labels: {
+              workload_type: 'statefulset',
+            },
+          },
+        ]
+      },
+      {
+        name: 'whizard-telemetry-apiserver.rules',
         rules: [
           {
             record: 'apiserver:apiserver_request_total:sum_irate',

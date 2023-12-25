@@ -1,5 +1,5 @@
 {{- /*
-Generated from 'whizard-apiserver-recording.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
+Generated from 'whizard-telemetry-apiserver.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
@@ -8,7 +8,7 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-apiserver-recording.rules" | trunc 63 | trimSuffix "-" }}
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-telemetry-apiserver.rules" | trunc 63 | trimSuffix "-" }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
@@ -22,7 +22,7 @@ metadata:
 {{- end }}
 spec:
   groups:
-  - name: whizard-apiserver-recording.rules
+  - name: whizard-telemetry-apiserver.rules
     rules:
     - expr: sum by(cluster) (irate(apiserver_request_total{job="apiserver"}[5m]))
       record: apiserver:apiserver_request_total:sum_irate

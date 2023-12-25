@@ -1,5 +1,5 @@
 {{- /*
-Generated from 'whizard-cluster-recording.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
+Generated from 'whizard-telemetry-cluster.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
@@ -8,7 +8,7 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
-  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-cluster-recording.rules" | trunc 63 | trimSuffix "-" }}
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-telemetry-cluster.rules" | trunc 63 | trimSuffix "-" }}
   namespace: {{ template "kube-prometheus-stack.namespace" . }}
   labels:
     app: {{ template "kube-prometheus-stack.name" . }}
@@ -22,7 +22,7 @@ metadata:
 {{- end }}
 spec:
   groups:
-  - name: whizard-cluster-recording.rules
+  - name: whizard-telemetry-cluster.rules
     rules:
     - expr: |-
         max by (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
