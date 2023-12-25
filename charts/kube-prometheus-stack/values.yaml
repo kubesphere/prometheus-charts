@@ -4477,7 +4477,7 @@ extraManifests:
     spec:
       endpoints:
       - interval: 1m
-        path: /kapis/metrics
+        path: /metrics
         relabelings:
         - action: labeldrop
           regex: (endpoint)
@@ -4500,7 +4500,7 @@ extraManifests:
     spec:
       endpoints:
       - interval: 1m
-        path: /kapis/metrics
+        path: /metrics
         relabelings:
         - action: labeldrop
           regex: (endpoint)
