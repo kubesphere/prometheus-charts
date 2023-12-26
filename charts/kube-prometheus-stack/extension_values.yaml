@@ -11,22 +11,6 @@ global:
   # or
   # - "image-pull-secret"
 
-namespaceOverride: kubesphere-monitoring-system
-
-alertmanager:
-  alertmanagerSpec:
-    image:
-      registry: quay.io
-      repository: prometheus/alertmanager
-      tag: ""
-    replicas: 1 
-    resources:
-      limits:
-        cpu: 200m
-        memory: 200Mi
-      requests:
-        cpu: 20m
-        memory: 30Mi
 
 prometheus:
   prometheusSpec:
@@ -77,7 +61,6 @@ prometheusOperator:
         memory: 50Mi
 
 kube-state-metrics:
-  namespaceOverride: kubesphere-monitoring-system
   image:
     registry: docker.io
     repository: kubesphere/kube-state-metrics
@@ -104,7 +87,6 @@ kube-state-metrics:
 
 
 prometheus-node-exporter:
-  namespaceOverride: kubesphere-monitoring-system
   image:
     registry: quay.io
     repository: prometheus/node-exporter
@@ -129,46 +111,3 @@ prometheus-node-exporter:
         cpu: 20m
         memory: 20Mi
 
-grafana:
-  enabled: false
-  namespaceOverride: kubesphere-monitoring-system
-  # grafana does not support the global.imageRegistry
-  image:
-    repository: grafana/grafana
-    tag: ""
-
-  resources:
-    limits:
-      cpu: "1"
-      memory: 2Gi
-    requests:
-      cpu: 100m
-      memory: 100Mi
-  persistence:
-    enabled: true
-    #storageClassName: default
-    type: "pvc"
-    size: 50Mi
-
-  sidecar:
-    image:
-      repository: quay.io/kiwigrid/k8s-sidecar
-      tag: 1.24.6
-    resources:
-      limits:
-        cpu: 100m
-        memory: 100Mi
-      requests:
-        cpu: 50m
-        memory: 50Mi
-  initChownData:
-    image:
-      repository: busybox
-      tag: "1.31.1"
-    resources:
-      limits:
-        cpu: 40m
-        memory: 40Mi
-      requests:
-        cpu: 20m
-        memory: 20Mi

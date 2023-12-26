@@ -14,7 +14,8 @@ rules:
   - "node.rules"
   - "kubelet.rules"
   - "node-exporter.rules"
-  - "whizard-apiserver-recording.rules"
-  - "whizard-cluster-recording.rules"
-  - "whizard-node-recording.rules"
+  - "whizard-telemetry-apiserver.rules"
+  - "whizard-telemetry-cluster.rules"
+  - "whizard-telemetry-namespace.rules"
+  - "whizard-telemetry-node.rules"
 {{- end }}
