@@ -24,7 +24,7 @@ spec:
   groups:
   - name: whizard-telemetry-namespace.rules
     rules:
-    - expr: sum by(cluster,namespace,workload,workload_type)(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: sum by(cluster,namespace,workload,workload_type)(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{} * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
       record: namespace:workload_cpu_usage:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -35,7 +35,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: sum by(cluster,namespace,workload,workload_type)(container_memory_usage_bytes{image!="",job="kubelet",metrics_path="/metrics/cadvisor"} * on (cluster, namespace, pod) group_left (node) topk by (cluster, namespace, pod) (1, max by (cluster, namespace, pod, node) (kube_pod_info{node!=""}))* on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
       record: namespace:workload_memory_usage:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -46,7 +46,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
       record: namespace:workload_memory_wo_cache_usage:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -57,7 +57,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, namespace,workload,workload_type) (irate(container_network_receive_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: sum by (cluster, namespace,workload,workload_type) (irate(container_network_receive_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
       record: namespace:workload_net_bytes_received:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -68,7 +68,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, namespace,workload,workload_type) (irate(container_network_transmit_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: sum by (cluster, namespace,workload,workload_type) (irate(container_network_transmit_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
       record: namespace:workload_net_bytes_transmitted:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -79,9 +79,9 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: label_replace(sum(kube_daemonset_status_number_unavailable{job="kube-state-metrics"}) by (daemonset, namespace, cluster) / sum(kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}) by (daemonset, namespace,cluster), "workload", "$1", "deamonset", "(.*)")
+    - expr: label_replace(sum(kube_daemonset_status_number_unavailable{job="kube-state-metrics"}) by (daemonset, namespace, cluster) / sum(kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}) by (daemonset, namespace,cluster), "workload", "$1", "daemonset", "(.*)")
       labels:
-        workload_type: deamonset
+        workload_type: daemonset
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
         {{- with .Values.defaultRules.additionalRuleLabels }}
           {{- toYaml . | nindent 8 }}
@@ -90,7 +90,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-      record: namespace:workload_unavalibled_replicas:ratio
+      record: namespace:workload_unavailable_replicas:ratio
     - expr: label_replace(sum(kube_deployment_status_replicas_unavailable{job="kube-state-metrics"}) by (deployment, namespace, cluster) / sum(kube_deployment_spec_replicas{job="kube-state-metrics"}) by (deployment, namespace, cluster), "workload", "$1", "deployment", "(.*)")
       labels:
         workload_type: deployment
@@ -102,7 +102,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-      record: namespace:workload_unavalibled_replicas:ratio
+      record: namespace:workload_unavailable_replicas:ratio
     - expr: label_replace(1 - sum(kube_statefulset_status_replicas_ready{job="kube-state-metrics"}) by (statefulset, namespace, cluster) / sum(kube_statefulset_status_replicas{job="kube-state-metrics"}) by (statefulset, namespace, cluster), "workload", "$1", "statefulset", "(.*)")
       labels:
         workload_type: statefulset
@@ -114,5 +114,5 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-      record: namespace:workload_unavalibled_replicas:ratio
+      record: namespace:workload_unavailable_replicas:ratio
 {{- end }}

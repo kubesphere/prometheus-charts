@@ -35,6 +35,17 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
+    - expr: node:node_memory_bytes_total:sum - node:node_memory_bytes_used_total:sum
+      record: node:node_memory_bytes_available:sum
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
     - expr: sum by (cluster, node, instance, host_ip)(node_memory_MemTotal_bytes{job="node-exporter"} -(node_memory_MemAvailable_bytes{job="node-exporter"} or (node_memory_Buffers_bytes{job="node-exporter"} + node_memory_Cached_bytes{job="node-exporter"} + node_memory_MemFree_bytes{job="node-exporter"} + node_memory_Slab_bytes{job="node-exporter"}))) * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"})
       record: node:node_memory_bytes_used_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
