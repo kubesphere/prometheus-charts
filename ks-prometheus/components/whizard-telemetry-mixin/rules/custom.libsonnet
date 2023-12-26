@@ -69,7 +69,7 @@
             expr: |||
               node:node_memory_bytes_total:sum - node:node_memory_bytes_used_total:sum
             ||| % $._config,
-          }
+          },
           {
             record: 'node:node_memory_bytes_used_total:sum',
             expr: |||
@@ -207,44 +207,44 @@
           {
             record: 'namespace:workload_cpu_usage:sum',
             expr: |||
-              sum by(cluster,namespace,workload,workload_type)(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+              sum by(cluster,namespace,workload,workload_type)(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{} * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
             ||| % $._config,
           },
           {
             record: 'namespace:workload_memory_usage:sum',
             expr: |||
-              sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+              sum by(cluster,namespace,workload,workload_type)(container_memory_usage_bytes{image!="",job="kubelet",metrics_path="/metrics/cadvisor"} * on (cluster, namespace, pod) group_left (node) topk by (cluster, namespace, pod) (1, max by (cluster, namespace, pod, node) (kube_pod_info{node!=""}))* on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
             ||| % $._config,
           },
           {
             record: 'namespace:workload_memory_wo_cache_usage:sum',
             expr: |||
-              sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+              sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
             ||| % $._config,
           },
           {
             record: 'namespace:workload_net_bytes_received:sum_irate',
             expr: |||
-              sum by (cluster, namespace,workload,workload_type) (irate(container_network_receive_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+              sum by (cluster, namespace,workload,workload_type) (irate(container_network_receive_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
             ||| % $._config,
           },
           {
             record: 'namespace:workload_net_bytes_transmitted:sum_irate',
             expr: |||
-              sum by (cluster, namespace,workload,workload_type) (irate(container_network_transmit_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+              sum by (cluster, namespace,workload,workload_type) (irate(container_network_transmit_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
             ||| % $._config,
           },
           {
-            record: 'namespace:workload_unavalibled_replicas:ratio',
+            record: 'namespace:workload_unavailable_replicas:ratio',
             expr: |||
-              label_replace(sum(kube_daemonset_status_number_unavailable{job="kube-state-metrics"}) by (daemonset, namespace, %(clusterLabel)s) / sum(kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}) by (daemonset, namespace,%(clusterLabel)s), "workload", "$1", "deamonset", "(.*)")
+              label_replace(sum(kube_daemonset_status_number_unavailable{job="kube-state-metrics"}) by (daemonset, namespace, %(clusterLabel)s) / sum(kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}) by (daemonset, namespace,%(clusterLabel)s), "workload", "$1", "daemonset", "(.*)")
             ||| % $._config,
             labels: {
-              workload_type: 'deamonset',
+              workload_type: 'daemonset',
             },
           },
           {
-            record: 'namespace:workload_unavalibled_replicas:ratio',
+            record: 'namespace:workload_unavailable_replicas:ratio',
             expr: |||
               label_replace(sum(kube_deployment_status_replicas_unavailable{job="kube-state-metrics"}) by (deployment, namespace, %(clusterLabel)s) / sum(kube_deployment_spec_replicas{job="kube-state-metrics"}) by (deployment, namespace, %(clusterLabel)s), "workload", "$1", "deployment", "(.*)")
             ||| % $._config,
@@ -253,7 +253,7 @@
             },
           },
           {
-            record: 'namespace:workload_unavalibled_replicas:ratio',
+            record: 'namespace:workload_unavailable_replicas:ratio',
             expr: |||
               label_replace(1 - sum(kube_statefulset_status_replicas_ready{job="kube-state-metrics"}) by (statefulset, namespace, %(clusterLabel)s) / sum(kube_statefulset_status_replicas{job="kube-state-metrics"}) by (statefulset, namespace, %(clusterLabel)s), "workload", "$1", "statefulset", "(.*)")
             ||| % $._config,
