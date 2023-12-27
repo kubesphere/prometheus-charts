@@ -31,11 +31,11 @@
                               kube_pod_owner{owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
                               "workload",
                               "$1",
-                              "owner_kind"
+                              "owner_name"
                             ),
                             "workload_type",
                             "$1",
-                            "owner_name"
+                            "owner_kind"
                           )
                         or
                             kube_pod_owner{owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
