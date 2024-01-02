@@ -14,12 +14,12 @@ spec:
     rules:
     - expr: |
         max by (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
-                kube_pod_info * on (cluster, namespace) group_left (workspace) (kube_namespace_labels)
+                kube_pod_info * on (cluster, namespace) group_left (workspace) (kube_namespace_labels{job="kube-state-metrics"})
               * on (cluster, namespace, pod) group_left (workload, workload_type)
                 (
                     label_join(
                       label_join(
-                        kube_pod_owner{owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
+                        kube_pod_owner{owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job",job="kube-state-metrics"},
                         "workload",
                         "$1",
                         "owner_name"
@@ -29,17 +29,17 @@ spec:
                       "owner_kind"
                     )
                   or
-                      kube_pod_owner{owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
+                      kube_pod_owner{owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job",job="kube-state-metrics"}
                     * on (namespace, pod) group_left (workload_type, workload)
                       namespace_workload_pod:kube_pod_owner:relabel
                 )
             * on (cluster, namespace, pod) group_left (qos_class)
-              (kube_pod_status_qos_class > 0)
+              (kube_pod_status_qos_class{job="kube-state-metrics"} > 0)
           * on (cluster, node) group_left (role)
             (
-                (kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"})
+                (kube_node_role{role="worker",job="kube-state-metrics"} unless ignoring (role) kube_node_role{role="control-plane",job="kube-state-metrics"})
               or
-                kube_node_role{role="control-plane"}
+                kube_node_role{role="control-plane",job="kube-state-metrics"}
             )
         )
       record: 'workspace_workload_node:kube_pod_info:'
@@ -52,10 +52,10 @@ spec:
         node:node_memory_bytes_total:sum - node:node_memory_bytes_used_total:sum
       record: node:node_memory_bytes_available:sum
     - expr: |
-        sum by (cluster, node, instance, host_ip)(node_memory_MemTotal_bytes{job="node-exporter"} -(node_memory_MemAvailable_bytes{job="node-exporter"} or (node_memory_Buffers_bytes{job="node-exporter"} + node_memory_Cached_bytes{job="node-exporter"} + node_memory_MemFree_bytes{job="node-exporter"} + node_memory_Slab_bytes{job="node-exporter"}))) * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"})
+        sum by (cluster, node, instance, host_ip)(node_memory_MemTotal_bytes{job="node-exporter"} -(node_memory_MemAvailable_bytes{job="node-exporter"} or (node_memory_Buffers_bytes{job="node-exporter"} + node_memory_Cached_bytes{job="node-exporter"} + node_memory_MemFree_bytes{job="node-exporter"} + node_memory_Slab_bytes{job="node-exporter"}))) * on (cluster,node) group_left(role) ((kube_node_role{job="kube-state-metrics", role="worker"} unless ignoring (role) kube_node_role{job="kube-state-metrics", role="control-plane"}) or kube_node_role{job="kube-state-metrics", role="control-plane"})
       record: node:node_memory_bytes_used_total:sum
     - expr: |
-        sum by (cluster, node, instance, host_ip, role)(node_memory_MemTotal_bytes{job="node-exporter"} * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"}))
+        sum by (cluster, node, instance, host_ip, role)(node_memory_MemTotal_bytes{job="node-exporter"} * on (cluster,node) group_left(role) ((kube_node_role{job="kube-state-metrics", role="worker"} unless ignoring (role) kube_node_role{job="kube-state-metrics", role="control-plane"}) or kube_node_role{job="kube-state-metrics", role="control-plane"}))
       record: node:node_memory_bytes_total:sum
     - expr: |
         node:node_filesystem_bytes_used_total:sum / node:node_filesystem_bytes_total:sum
@@ -68,14 +68,14 @@ spec:
           max by (cluster, node, instance, host_ip, device) (
               node_filesystem_size_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"} -
               node_filesystem_avail_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"}
-          ) * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"})
+          ) * on (cluster,node) group_left(role) ((kube_node_role{job="kube-state-metrics", role="worker"} unless ignoring (role) kube_node_role{job="kube-state-metrics", role="control-plane"}) or kube_node_role{job="kube-state-metrics", role="control-plane"})
         )
       record: node:node_filesystem_bytes_used_total:sum
     - expr: |
         sum by (cluster, node, instance, host_ip, role) (
           max by (cluster, node, instance, host_ip, device) (
               node_filesystem_size_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"}
-          ) * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"})
+          ) * on (cluster,node) group_left(role) ((kube_node_role{job="kube-state-metrics", role="worker"} unless ignoring (role) kube_node_role{job="kube-state-metrics", role="control-plane"}) or kube_node_role{job="kube-state-metrics", role="control-plane"})
         )
       record: node:node_filesystem_bytes_total:sum
     - expr: |
@@ -85,10 +85,10 @@ spec:
         sum by(cluster,node,host_ip,role)(kube_pod_status_scheduled{job="kube-state-metrics", condition="true"} * on(cluster,namespace,pod) group_left(node,host_ip,role) workspace_workload_node:kube_pod_info:)
       record: node:node_pod_total:sum
     - expr: |
-        sum by (cluster,node,host_ip,role)(kube_node_status_allocatable{resource="pods"} * on (cluster, node) (kube_node_status_condition{condition="Ready",status="true"}) * on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""}))
+        sum by (cluster,node,host_ip,role)(kube_node_status_allocatable{job="kube-state-metrics",resource="pods"} * on (cluster, node) (kube_node_status_condition{job="kube-state-metrics", condition="Ready",status="true"}) * on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""}))
       record: node:node_pod_quota:sum
     - expr: |
-        count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""} unless on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0)unless on (pod, namespace, cluster)((kube_pod_status_ready{condition="true",job="kube-state-metrics"} > 0)and on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics",phase="Running"} > 0))unless on (pod, namespace, cluster)kube_pod_container_status_waiting_reason{job="kube-state-metrics",reason="ContainerCreating"} > 0)/count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""}unless on (pod, namespace, cluster)kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"}> 0)
+        count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""} unless on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics", phase="Succeeded"} > 0)unless on (pod, namespace, cluster)((kube_pod_status_ready{job="kube-state-metrics", condition="true"} > 0)and on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics", phase="Running"} > 0))unless on (pod, namespace, cluster)kube_pod_container_status_waiting_reason{job="kube-state-metrics", reason="ContainerCreating"} > 0)/count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""}unless on (pod, namespace, cluster)kube_pod_status_phase{job="kube-state-metrics", phase="Succeeded"}> 0)
       record: node:pod_abnormal:ratio
     - expr: |
         sum by (cluster,node)(node_load1 / on(cluster,node) node:node_num_cpu:sum) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
@@ -120,6 +120,12 @@ spec:
     - expr: |
         sum by (node, cluster)(node_filesystem_files{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"} - node_filesystem_files_free{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"}) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
       record: node:node_inodes_used_total:sum
+    - expr: |
+        sum by (node, cluster) (irate(node_network_transmit_bytes_total{job="node-exporter",device!~"veth.+"}[5m]))* on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+      record: node:node_net_bytes_transmitted:sum_irate
+    - expr: |
+        sum by (node, cluster) (irate(node_network_receive_bytes_total{job="node-exporter",device!~"veth.+"}[5m]))* on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+      record: node:node_net_bytes_received:sum_irate
   - name: whizard-telemetry-namespace.rules
     rules:
     - expr: |

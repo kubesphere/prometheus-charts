@@ -3548,6 +3548,9 @@ prometheus:
     # - url: http://remote1/push
     ## additionalRemoteWrite is appended to remoteWrite
     additionalRemoteWrite: []
+    ## internalRemoteWrite is appended to remoteWrite when agentMode is enabled
+    internalRemoteWrite:
+      - url: http://prometheus-k8s.{{ template "kube-prometheus-stack.namespace" . }}.svc:9090/api/v1/receive
 
     ## Enable/Disable Grafana dashboards provisioning for prometheus remote write feature
     remoteWriteDashboards: false
@@ -4519,3 +4522,53 @@ extraManifests:
   #     name: prometheus-extra
   #   data:
   #     extra-data: "value"
+
+## extraManifestsTpl allows to add extra manifests with tpl support
+extraManifestsTpl: |
+  {{- if .Values.prometheus.agentMode }}
+  apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/part-of: whizard
+      app.kubernetes.io/name: whizard-agent-proxy
+      app.kubernetes.io/vendor: kubesphere
+    name: prometheus-k8s
+    namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  spec:
+    ports:
+    - name: web
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+    selector:
+      app.kubernetes.io/name: whizard-agent-proxy
+    sessionAffinity: ClientIP
+    sessionAffinityConfig:
+      clientIP:
+        timeoutSeconds: 10800
+    type: ClusterIP
+  {{- else }}
+  apiVersion: v1
+  kind: Service
+  metadata:
+    labels:
+      app.kubernetes.io/part-of: kube-prometheus-stack
+      app.kubernetes.io/vendor: kubesphere
+    name: prometheus-k8s
+    namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  spec:
+    ports:
+    - name: web
+      port: 9090
+      protocol: TCP
+      targetPort: 9090
+    selector:
+      app.kubernetes.io/name: prometheus
+      operator.prometheus.io/name: k8s
+    sessionAffinity: ClientIP
+    sessionAffinityConfig:
+      clientIP:
+        timeoutSeconds: 10800
+    type: ClusterIP
+  {{- end }}
