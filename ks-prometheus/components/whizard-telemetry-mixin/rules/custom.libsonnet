@@ -23,12 +23,12 @@
             record: 'workspace_workload_node:kube_pod_info:',
             expr: |||
               max by (%(clusterLabel)s, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
-                      kube_pod_info * on (cluster, namespace) group_left (workspace) (kube_namespace_labels)
+                      kube_pod_info * on (cluster, namespace) group_left (workspace) (kube_namespace_labels{%(kubeStateMetricsSelector)s})
                     * on (%(clusterLabel)s, namespace, pod) group_left (workload, workload_type)
                       (
                           label_join(
                             label_join(
-                              kube_pod_owner{owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
+                              kube_pod_owner{owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job",%(kubeStateMetricsSelector)s},
                               "workload",
                               "$1",
                               "owner_name"
@@ -38,17 +38,17 @@
                             "owner_kind"
                           )
                         or
-                            kube_pod_owner{owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
+                            kube_pod_owner{owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job",%(kubeStateMetricsSelector)s}
                           * on (namespace, pod) group_left (workload_type, workload)
                             namespace_workload_pod:kube_pod_owner:relabel
                       )
                   * on (%(clusterLabel)s, namespace, pod) group_left (qos_class)
-                    (kube_pod_status_qos_class > 0)
+                    (kube_pod_status_qos_class{%(kubeStateMetricsSelector)s} > 0)
                 * on (%(clusterLabel)s, node) group_left (role)
                   (
-                      (kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"})
+                      (kube_node_role{role="worker",%(kubeStateMetricsSelector)s} unless ignoring (role) kube_node_role{role="control-plane",%(kubeStateMetricsSelector)s})
                     or
-                      kube_node_role{role="control-plane"}
+                      kube_node_role{role="control-plane",%(kubeStateMetricsSelector)s}
                   )
               )
             ||| % $._config
@@ -73,13 +73,13 @@
           {
             record: 'node:node_memory_bytes_used_total:sum',
             expr: |||
-              sum by (%(clusterLabel)s, %(nodeLabel)s, instance, %(hostIPLabel)s)(node_memory_MemTotal_bytes{%(nodeExporterSelector)s} -(node_memory_MemAvailable_bytes{%(nodeExporterSelector)s} or (node_memory_Buffers_bytes{%(nodeExporterSelector)s} + node_memory_Cached_bytes{%(nodeExporterSelector)s} + node_memory_MemFree_bytes{%(nodeExporterSelector)s} + node_memory_Slab_bytes{%(nodeExporterSelector)s}))) * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"})
+              sum by (%(clusterLabel)s, %(nodeLabel)s, instance, %(hostIPLabel)s)(node_memory_MemTotal_bytes{%(nodeExporterSelector)s} -(node_memory_MemAvailable_bytes{%(nodeExporterSelector)s} or (node_memory_Buffers_bytes{%(nodeExporterSelector)s} + node_memory_Cached_bytes{%(nodeExporterSelector)s} + node_memory_MemFree_bytes{%(nodeExporterSelector)s} + node_memory_Slab_bytes{%(nodeExporterSelector)s}))) * on (cluster,node) group_left(role) ((kube_node_role{%(kubeStateMetricsSelector)s, role="worker"} unless ignoring (role) kube_node_role{%(kubeStateMetricsSelector)s, role="control-plane"}) or kube_node_role{%(kubeStateMetricsSelector)s, role="control-plane"})
             ||| % $._config,
           },           
           {
             record: 'node:node_memory_bytes_total:sum',
             expr: |||
-              sum by (%(clusterLabel)s, %(nodeLabel)s, instance, %(hostIPLabel)s, role)(node_memory_MemTotal_bytes{%(nodeExporterSelector)s} * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"}))
+              sum by (%(clusterLabel)s, %(nodeLabel)s, instance, %(hostIPLabel)s, role)(node_memory_MemTotal_bytes{%(nodeExporterSelector)s} * on (cluster,node) group_left(role) ((kube_node_role{%(kubeStateMetricsSelector)s, role="worker"} unless ignoring (role) kube_node_role{%(kubeStateMetricsSelector)s, role="control-plane"}) or kube_node_role{%(kubeStateMetricsSelector)s, role="control-plane"}))
             ||| % $._config,
           },
           {
@@ -101,7 +101,7 @@
                 max by (%(clusterLabel)s, %(nodeLabel)s, instance, %(hostIPLabel)s, device) (
                     node_filesystem_size_bytes{%(hostFilesystemDeviceSelector)s, %(nodeExporterSelector)s} -
                     node_filesystem_avail_bytes{%(hostFilesystemDeviceSelector)s, %(nodeExporterSelector)s}
-                ) * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"})
+                ) * on (cluster,node) group_left(role) ((kube_node_role{%(kubeStateMetricsSelector)s, role="worker"} unless ignoring (role) kube_node_role{%(kubeStateMetricsSelector)s, role="control-plane"}) or kube_node_role{%(kubeStateMetricsSelector)s, role="control-plane"})
               )
             ||| % $._config,
           },
@@ -111,7 +111,7 @@
               sum by (%(clusterLabel)s, %(nodeLabel)s, instance, %(hostIPLabel)s, role) (
                 max by (%(clusterLabel)s, %(nodeLabel)s, instance, %(hostIPLabel)s, device) (
                     node_filesystem_size_bytes{%(hostFilesystemDeviceSelector)s, %(nodeExporterSelector)s}
-                ) * on (cluster,node) group_left(role) ((kube_node_role{role="worker"} unless ignoring (role) kube_node_role{role="control-plane"}) or kube_node_role{role="control-plane"})
+                ) * on (cluster,node) group_left(role) ((kube_node_role{%(kubeStateMetricsSelector)s, role="worker"} unless ignoring (role) kube_node_role{%(kubeStateMetricsSelector)s, role="control-plane"}) or kube_node_role{%(kubeStateMetricsSelector)s, role="control-plane"})
               )
             ||| % $._config,
           },
@@ -124,19 +124,19 @@
           {
             record: 'node:node_pod_total:sum',
             expr: |||
-              sum by(cluster,node,host_ip,role)(kube_pod_status_scheduled{job="kube-state-metrics", condition="true"} * on(cluster,namespace,pod) group_left(node,host_ip,role) workspace_workload_node:kube_pod_info:)
+              sum by(cluster,node,host_ip,role)(kube_pod_status_scheduled{%(kubeStateMetricsSelector)s, condition="true"} * on(cluster,namespace,pod) group_left(node,host_ip,role) workspace_workload_node:kube_pod_info:)
             ||| % $._config,
           },
           {
             record: 'node:node_pod_quota:sum',
             expr: |||
-              sum by (cluster,node,host_ip,role)(kube_node_status_allocatable{resource="pods"} * on (cluster, node) (kube_node_status_condition{condition="Ready",status="true"}) * on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""}))
+              sum by (cluster,node,host_ip,role)(kube_node_status_allocatable{%(kubeStateMetricsSelector)s,resource="pods"} * on (cluster, node) (kube_node_status_condition{%(kubeStateMetricsSelector)s, condition="Ready",status="true"}) * on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""}))
             ||| % $._config,
           },
           {
             record: 'node:pod_abnormal:ratio',
             expr: |||
-              count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""} unless on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0)unless on (pod, namespace, cluster)((kube_pod_status_ready{condition="true",job="kube-state-metrics"} > 0)and on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics",phase="Running"} > 0))unless on (pod, namespace, cluster)kube_pod_container_status_waiting_reason{job="kube-state-metrics",reason="ContainerCreating"} > 0)/count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""}unless on (pod, namespace, cluster)kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"}> 0)
+              count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""} unless on (pod, namespace, cluster)(kube_pod_status_phase{%(kubeStateMetricsSelector)s, phase="Succeeded"} > 0)unless on (pod, namespace, cluster)((kube_pod_status_ready{%(kubeStateMetricsSelector)s, condition="true"} > 0)and on (pod, namespace, cluster)(kube_pod_status_phase{%(kubeStateMetricsSelector)s, phase="Running"} > 0))unless on (pod, namespace, cluster)kube_pod_container_status_waiting_reason{%(kubeStateMetricsSelector)s, reason="ContainerCreating"} > 0)/count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""}unless on (pod, namespace, cluster)kube_pod_status_phase{%(kubeStateMetricsSelector)s, phase="Succeeded"}> 0)
             ||| % $._config,
           },
           {
@@ -199,6 +199,18 @@
               sum by (node, %(clusterLabel)s)(node_filesystem_files{%(nodeExporterSelector)s, %(hostFilesystemDeviceSelector)s} - node_filesystem_files_free{%(nodeExporterSelector)s, %(hostFilesystemDeviceSelector)s}) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
             ||| % $._config,
           },
+          {
+            record: 'node:node_net_bytes_transmitted:sum_irate',
+            expr: |||
+              sum by (node, %(clusterLabel)s) (irate(node_network_transmit_bytes_total{%(nodeExporterSelector)s,device!~"veth.+"}[5m]))* on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+            ||| % $._config,
+          },
+          {
+            record: 'node:node_net_bytes_received:sum_irate',
+            expr: |||
+              sum by (node, %(clusterLabel)s) (irate(node_network_receive_bytes_total{%(nodeExporterSelector)s,device!~"veth.+"}[5m]))* on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+            ||| % $._config,
+          },
         ],
       },
       {
@@ -237,7 +249,7 @@
           {
             record: 'namespace:workload_unavailable_replicas:ratio',
             expr: |||
-              label_replace(sum(kube_daemonset_status_number_unavailable{job="kube-state-metrics"}) by (daemonset, namespace, %(clusterLabel)s) / sum(kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}) by (daemonset, namespace,%(clusterLabel)s), "workload", "$1", "daemonset", "(.*)")
+              label_replace(sum(kube_daemonset_status_number_unavailable{%(kubeStateMetricsSelector)s}) by (daemonset, namespace, %(clusterLabel)s) / sum(kube_daemonset_status_desired_number_scheduled{%(kubeStateMetricsSelector)s}) by (daemonset, namespace,%(clusterLabel)s), "workload", "$1", "daemonset", "(.*)")
             ||| % $._config,
             labels: {
               workload_type: 'daemonset',
@@ -246,7 +258,7 @@
           {
             record: 'namespace:workload_unavailable_replicas:ratio',
             expr: |||
-              label_replace(sum(kube_deployment_status_replicas_unavailable{job="kube-state-metrics"}) by (deployment, namespace, %(clusterLabel)s) / sum(kube_deployment_spec_replicas{job="kube-state-metrics"}) by (deployment, namespace, %(clusterLabel)s), "workload", "$1", "deployment", "(.*)")
+              label_replace(sum(kube_deployment_status_replicas_unavailable{%(kubeStateMetricsSelector)s}) by (deployment, namespace, %(clusterLabel)s) / sum(kube_deployment_spec_replicas{%(kubeStateMetricsSelector)s}) by (deployment, namespace, %(clusterLabel)s), "workload", "$1", "deployment", "(.*)")
             ||| % $._config,
             labels: {
               workload_type: 'deployment',
@@ -255,7 +267,7 @@
           {
             record: 'namespace:workload_unavailable_replicas:ratio',
             expr: |||
-              label_replace(1 - sum(kube_statefulset_status_replicas_ready{job="kube-state-metrics"}) by (statefulset, namespace, %(clusterLabel)s) / sum(kube_statefulset_status_replicas{job="kube-state-metrics"}) by (statefulset, namespace, %(clusterLabel)s), "workload", "$1", "statefulset", "(.*)")
+              label_replace(1 - sum(kube_statefulset_status_replicas_ready{%(kubeStateMetricsSelector)s}) by (statefulset, namespace, %(clusterLabel)s) / sum(kube_statefulset_status_replicas{%(kubeStateMetricsSelector)s}) by (statefulset, namespace, %(clusterLabel)s), "workload", "$1", "statefulset", "(.*)")
             ||| % $._config,
             labels: {
               workload_type: 'statefulset',
