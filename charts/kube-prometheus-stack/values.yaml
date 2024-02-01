@@ -2174,7 +2174,8 @@ prometheus-node-exporter:
     - --collector.netclass.ignored-devices=^(veth.*|[a-f0-9]{15})$
     - --collector.netdev.device-exclude=^(veth.*|[a-f0-9]{15})$
   service:
-    portName: http-metrics
+    # must be metrics for customized prometheus-node-exporter because of its own limit.
+    portName: metrics
     listenOnAllInterfaces: false
 
   affinity:
