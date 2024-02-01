@@ -9,6 +9,8 @@
     hostFilesystemDeviceSelector: 'device=~"/dev/.*",device!~"/dev/loop\\\\d+"',
     clusterLabel: 'cluster',
     podLabel: 'pod',
+    etcd_selector: 'job=~".*etcd.*"',
+    etcd_instance_labels: 'instance',
   },
 
   prometheusRules+:: {
@@ -67,6 +69,26 @@
         name: 'whizard-telemetry-node.rules',
         rules: [
           {
+            record: 'node:node_cpu_utilization:ratio',
+            expr: |||
+              sum by (%(clusterLabel)s, node) (
+                  avg by (%(clusterLabel)s, instance, namespace, pod) (
+                    sum without (mode) (
+                      rate(node_cpu_seconds_total{job="node-exporter",mode!="idle",mode!="iowait",mode!="steal"}[5m])
+                    )
+                  )
+                * on (%(clusterLabel)s, namespace, %(podLabel)s) group_left (node)
+                  topk by (%(clusterLabel)s, namespace, %(podLabel)s) (1, node_namespace_pod:kube_pod_info:)
+              )
+            ||| % $._config,
+          },
+          {
+            record: 'node:node_cpu_utilization:sum',
+            expr: |||
+              node:node_cpu_utilization:ratio * node:node_num_cpu:sum
+            ||| % $._config,
+          },        
+          {
             record: 'node:node_memory_utilisation:ratio',
             expr: |||
               node:node_memory_bytes_used_total:sum / node:node_memory_bytes_total:sum
@@ -119,7 +141,7 @@
             ||| % $._config,
           },
           {
-            record: 'node:node_device_filesystem_avaliable_bytes_total:sum',
+            record: 'node:node_device_filesystem_available_bytes_total:sum',
             expr: |||
               sum by (%(clusterLabel)s, node, device) (
                     max by (namespace, pod, instance, device) (
@@ -163,15 +185,15 @@
             ||| % $._config,
           },
           {
-            record: 'node:node_filesystem_avaliable_bytes_total:sum',
+            record: 'node:node_filesystem_available_bytes_total:sum',
             expr: |||
-              sum by (%(clusterLabel)s, node)(node:node_device_filesystem_avaliable_bytes_total:sum)
+              sum by (%(clusterLabel)s, node)(node:node_device_filesystem_available_bytes_total:sum)
             ||| % $._config,
           },
           {
             record: 'node:node_filesystem_bytes_used_total:sum',
             expr: |||
-              sum by (%(clusterLabel)s, node)(node:node_device_filesystem_used_bytes_total:sum)
+              sum by (%(clusterLabel)s, node)(node:node_device_filesystem_bytes_used_total:sum)
             ||| % $._config,
           },
           {
@@ -467,6 +489,156 @@
               sum by (%(clusterLabel)s, verb)(irate(apiserver_request_duration_seconds_sum{%(kubeApiserverSelector)s,subresource!="log", verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))  / sum by (%(clusterLabel)s, verb)(irate(apiserver_request_duration_seconds_count{%(kubeApiserverSelector)s, subresource!="log",verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m])) 
             ||| % $._config,
           },
+        ],
+      },
+      {
+        name: 'whizard-telemetry-etcd.rules',
+        rules: [
+          {
+            expr: |||
+              sum by(%(clusterLabel)s) (up{%(etcd_selector)s} == 1)
+            ||| % $._config,
+            record: 'etcd:up:sum',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(changes(etcd_server_leader_changes_seen_total{%(etcd_selector)s}[1h])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_server_leader_changes_seen:sum_changes',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(etcd_server_proposals_failed_total{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_server_proposals_failed:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(etcd_server_proposals_applied_total{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_server_proposals_applied:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(etcd_server_proposals_committed_total{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_server_proposals_committed:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(etcd_server_proposals_pending{%(etcd_selector)s}) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_server_proposals_pending:sum',
+          },
+          {
+            expr: |||
+              sum(label_replace(etcd_mvcc_db_total_size_in_bytes{%(etcd_selector)s},"node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_mvcc_db_total_size:sum',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(etcd_network_client_grpc_received_bytes_total{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_network_client_grpc_received_bytes:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(etcd_network_client_grpc_sent_bytes_total{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_network_client_grpc_sent_bytes:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(grpc_server_started_total{%(etcd_selector)s,grpc_type="unary"}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:grpc_server_started:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(grpc_server_handled_total{%(etcd_selector)s,grpc_type="unary",grpc_code!="OK"}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:grpc_server_handled:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(grpc_server_msg_received_total{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:grpc_server_msg_received:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(grpc_server_msg_sent_total{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:grpc_server_msg_sent:sum_irate',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(etcd_disk_wal_fsync_duration_seconds_sum{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s) / sum(irate(etcd_disk_wal_fsync_duration_seconds_count{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_disk_wal_fsync_duration:avg',
+          },
+          {
+            expr: |||
+              sum(label_replace(sum(irate(etcd_disk_backend_commit_duration_seconds_sum{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s) / sum(irate(etcd_disk_backend_commit_duration_seconds_count{%(etcd_selector)s}[5m])) by (%(etcd_instance_labels)s, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, %(clusterLabel)s)
+            ||| % $._config,
+            record: 'etcd:etcd_disk_backend_commit_duration:avg',
+          },
+                    {
+            expr: |||
+              histogram_quantile(0.99, sum(label_replace(sum(irate(etcd_disk_wal_fsync_duration_seconds_bucket{%(etcd_selector)s}[5m])) by (instance, le, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, le, %(clusterLabel)s))
+            ||| % $._config,
+            labels: {
+              quantile: "0.99",
+            },
+            record: 'etcd:etcd_disk_wal_fsync_duration:histogram_quantile',
+          },
+          {
+            expr: |||
+              histogram_quantile(0.9, sum(label_replace(sum(irate(etcd_disk_wal_fsync_duration_seconds_bucket{%(etcd_selector)s}[5m])) by (instance, le, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, le, %(clusterLabel)s))
+            ||| % $._config,
+            labels: {
+              quantile: "0.9",
+            },
+            record: 'etcd:etcd_disk_wal_fsync_duration:histogram_quantile',
+          },
+          {
+            expr: |||
+              histogram_quantile(0.5, sum(label_replace(sum(irate(etcd_disk_wal_fsync_duration_seconds_bucket{%(etcd_selector)s}[5m])) by (instance, le, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, le, %(clusterLabel)s))
+            ||| % $._config,
+            labels: {
+              quantile: "0.5",
+            },
+            record: 'etcd:etcd_disk_wal_fsync_duration:histogram_quantile',
+          },
+          {
+            expr: |||
+              histogram_quantile(0.99, sum(label_replace(sum(irate(etcd_disk_backend_commit_duration_seconds_bucket{%(etcd_selector)s}[5m])) by (instance, le, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, le, %(clusterLabel)s))
+            ||| % $._config,
+            labels: {
+              quantile: "0.99",
+            },
+            record: 'etcd:etcd_disk_backend_commit_duration:histogram_quantile',
+          },
+          {
+            expr: |||
+              histogram_quantile(0.9, sum(label_replace(sum(irate(etcd_disk_backend_commit_duration_seconds_bucket{%(etcd_selector)s}[5m])) by (instance, le, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, le, %(clusterLabel)s))
+            ||| % $._config,
+            labels: {
+              quantile: "0.9",
+            },
+            record: 'etcd:etcd_disk_backend_commit_duration:histogram_quantile',
+          },
+          {
+            expr: |||
+              histogram_quantile(0.5, sum(label_replace(sum(irate(etcd_disk_backend_commit_duration_seconds_bucket{%(etcd_selector)s}[5m])) by (instance, le, %(clusterLabel)s), "node", "$1", "%(etcd_instance_labels)s", "(.*):.*")) by (node, le, %(clusterLabel)s))
+            ||| % $._config,
+            labels: {
+              quantile: "0.5",
+            },
+            record: 'etcd:etcd_disk_backend_commit_duration:histogram_quantile',
+          },
+
         ],
       },
     ],

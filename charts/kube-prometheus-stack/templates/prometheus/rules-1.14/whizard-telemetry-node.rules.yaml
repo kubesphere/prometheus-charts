@@ -24,6 +24,37 @@ spec:
   groups:
   - name: whizard-telemetry-node.rules
     rules:
+    - expr: |-
+        sum by (cluster, node) (
+            avg by (cluster, instance, namespace, pod) (
+              sum without (mode) (
+                rate(node_cpu_seconds_total{job="node-exporter",mode!="idle",mode!="iowait",mode!="steal"}[5m])
+              )
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
+      record: node:node_cpu_utilization:ratio
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: node:node_cpu_utilization:ratio * node:node_num_cpu:sum
+      record: node:node_cpu_utilization:sum
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
     - expr: node:node_memory_bytes_used_total:sum / node:node_memory_bytes_total:sum
       record: node:node_memory_utilisation:ratio
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
@@ -111,7 +142,7 @@ spec:
           * on (cluster, namespace, pod) group_left (node)
             topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
         )
-      record: node:node_device_filesystem_avaliable_bytes_total:sum
+      record: node:node_device_filesystem_available_bytes_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
         {{- with .Values.defaultRules.additionalRuleLabels }}
@@ -170,8 +201,8 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, node)(node:node_device_filesystem_avaliable_bytes_total:sum)
-      record: node:node_filesystem_avaliable_bytes_total:sum
+    - expr: sum by (cluster, node)(node:node_device_filesystem_available_bytes_total:sum)
+      record: node:node_filesystem_available_bytes_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
         {{- with .Values.defaultRules.additionalRuleLabels }}
@@ -181,7 +212,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, node)(node:node_device_filesystem_used_bytes_total:sum)
+    - expr: sum by (cluster, node)(node:node_device_filesystem_bytes_used_total:sum)
       record: node:node_filesystem_bytes_used_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
