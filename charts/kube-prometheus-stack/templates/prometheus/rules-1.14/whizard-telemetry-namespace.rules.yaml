@@ -24,7 +24,14 @@ spec:
   groups:
   - name: whizard-telemetry-namespace.rules
     rules:
-    - expr: sum by(cluster,namespace,workload,workload_type)(node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate{} * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: |-
+        sum by (cluster, namespace, workload, workload_type) (
+            sum by (cluster, namespace, pod) (
+              node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate
+            )
+          * on (cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
       record: namespace:workload_cpu_usage:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -35,7 +42,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by(cluster,namespace,workload,workload_type)(container_memory_usage_bytes{image!="",job="kubelet",metrics_path="/metrics/cadvisor"} * on (cluster, namespace, pod) group_left (node) topk by (cluster, namespace, pod) (1, max by (cluster, namespace, pod, node) (kube_pod_info{node!=""}))* on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: |-
+        sum by (cluster, namespace, workload, workload_type) (
+            sum by (cluster, namespace, pod) (
+              container_memory_usage_bytes{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
+            )
+          * on (cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
       record: namespace:workload_memory_usage:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -46,7 +60,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, namespace,workload,workload_type) (node_namespace_pod_container:container_memory_working_set_bytes{} * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: |-
+        sum by (cluster, namespace, workload, workload_type) (
+            sum by (cluster, namespace, pod) (
+              node_namespace_pod_container:container_memory_working_set_bytes
+            )
+          * on (cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
       record: namespace:workload_memory_wo_cache_usage:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -57,7 +78,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, namespace,workload,workload_type) (irate(container_network_receive_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: |-
+        sum by (cluster, namespace, workload, workload_type) (
+            sum by (cluster, namespace, pod) (
+              irate(container_network_receive_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}[5m])
+            )
+          * on (cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
       record: namespace:workload_net_bytes_received:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -68,7 +96,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, namespace,workload,workload_type) (irate(container_network_transmit_bytes_total{namespace!="", pod!=""}[5m]) * on(cluster,namespace,pod)group_left(workload,workload_type) workspace_workload_node:kube_pod_info:{})
+    - expr: |-
+        sum by (cluster, namespace, workload, workload_type) (
+            sum by (cluster, namespace, pod) (
+              irate(container_network_transmit_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}[5m])
+            )
+          * on (cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
       record: namespace:workload_net_bytes_transmitted:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:

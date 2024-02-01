@@ -46,7 +46,26 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, node, instance, host_ip)(node_memory_MemTotal_bytes{job="node-exporter"} -(node_memory_MemAvailable_bytes{job="node-exporter"} or (node_memory_Buffers_bytes{job="node-exporter"} + node_memory_Cached_bytes{job="node-exporter"} + node_memory_MemFree_bytes{job="node-exporter"} + node_memory_Slab_bytes{job="node-exporter"}))) * on (cluster,node) group_left(role) ((kube_node_role{job="kube-state-metrics", role="worker"} unless ignoring (role) kube_node_role{job="kube-state-metrics", role="control-plane"}) or kube_node_role{job="kube-state-metrics", role="control-plane"})
+    - expr: |-
+        sum by (cluster, node) (
+            (
+                node_memory_MemTotal_bytes{job="node-exporter"}
+              -
+                (
+                    node_memory_MemAvailable_bytes{job="node-exporter"}
+                  or
+                    (
+                          node_memory_Buffers_bytes{job="node-exporter"} + node_memory_Cached_bytes{job="node-exporter"}
+                        +
+                          node_memory_MemFree_bytes{job="node-exporter"}
+                      +
+                        node_memory_Slab_bytes{job="node-exporter"}
+                    )
+                )
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:node_memory_bytes_used_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -57,8 +76,80 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, node, instance, host_ip, role)(node_memory_MemTotal_bytes{job="node-exporter"} * on (cluster,node) group_left(role) ((kube_node_role{job="kube-state-metrics", role="worker"} unless ignoring (role) kube_node_role{job="kube-state-metrics", role="control-plane"}) or kube_node_role{job="kube-state-metrics", role="control-plane"}))
+    - expr: |-
+        sum by (cluster, node) (
+            node_memory_MemTotal_bytes{job="node-exporter"}
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:node_memory_bytes_total:sum
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: node:node_device_filesystem_bytes_used_total:sum / node:node_device_filesystem_bytes_total:sum
+      record: node:node_device_filesystem_utilisation:ratio
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        sum by (cluster, node, device) (
+              max by (namespace, pod, instance, device) (
+                  node_filesystem_avail_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"}
+              )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
+      record: node:node_device_filesystem_avaliable_bytes_total:sum
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        sum by (cluster, node, device) (
+              max by (cluster, namespace, pod, instance, device) (
+                  node_filesystem_size_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"}
+                -
+                  node_filesystem_avail_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"}
+              )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
+      record: node:node_device_filesystem_bytes_used_total:sum
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        sum by (cluster, node, device) (
+              max by (cluster, namespace, pod, instance, device) (
+                  node_filesystem_size_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"}
+              )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
+      record: node:node_device_filesystem_bytes_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
         {{- with .Values.defaultRules.additionalRuleLabels }}
@@ -79,7 +170,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: node:node_filesystem_bytes_total:sum - node:node_filesystem_bytes_used_total:sum
+    - expr: sum by (cluster, node)(node:node_device_filesystem_avaliable_bytes_total:sum)
       record: node:node_filesystem_avaliable_bytes_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -90,13 +181,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: |-
-        sum by (cluster, node, instance, host_ip, role) (
-          max by (cluster, node, instance, host_ip, device) (
-              node_filesystem_size_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"} -
-              node_filesystem_avail_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"}
-          ) * on (cluster,node) group_left(role) ((kube_node_role{job="kube-state-metrics", role="worker"} unless ignoring (role) kube_node_role{job="kube-state-metrics", role="control-plane"}) or kube_node_role{job="kube-state-metrics", role="control-plane"})
-        )
+    - expr: sum by (cluster, node)(node:node_device_filesystem_used_bytes_total:sum)
       record: node:node_filesystem_bytes_used_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -107,12 +192,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: |-
-        sum by (cluster, node, instance, host_ip, role) (
-          max by (cluster, node, instance, host_ip, device) (
-              node_filesystem_size_bytes{device=~"/dev/.*",device!~"/dev/loop\\d+", job="node-exporter"}
-          ) * on (cluster,node) group_left(role) ((kube_node_role{job="kube-state-metrics", role="worker"} unless ignoring (role) kube_node_role{job="kube-state-metrics", role="control-plane"}) or kube_node_role{job="kube-state-metrics", role="control-plane"})
-        )
+    - expr: sum by (cluster, node)(node:node_device_filesystem_bytes_total:sum)
       record: node:node_filesystem_bytes_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -134,7 +214,12 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by(cluster,node,host_ip,role)(kube_pod_status_scheduled{job="kube-state-metrics", condition="true"} * on(cluster,namespace,pod) group_left(node,host_ip,role) workspace_workload_node:kube_pod_info:)
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, namespace, pod) (kube_pod_status_scheduled{job="kube-state-metrics"} > 0)
+          * on (cluster, namespace, pod) group_left (node)
+            node_namespace_pod:kube_pod_info:
+        )
       record: node:node_pod_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -145,7 +230,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster,node,host_ip,role)(kube_node_status_allocatable{job="kube-state-metrics",resource="pods"} * on (cluster, node) (kube_node_status_condition{job="kube-state-metrics", condition="Ready",status="true"}) * on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""}))
+    - expr: sum by (cluster, node) (kube_node_status_allocatable{job="kube-state-metrics",resource="pods"})
       record: node:node_pod_quota:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -156,7 +241,26 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""} unless on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics", phase="Succeeded"} > 0)unless on (pod, namespace, cluster)((kube_pod_status_ready{job="kube-state-metrics", condition="true"} > 0)and on (pod, namespace, cluster)(kube_pod_status_phase{job="kube-state-metrics", phase="Running"} > 0))unless on (pod, namespace, cluster)kube_pod_container_status_waiting_reason{job="kube-state-metrics", reason="ContainerCreating"} > 0)/count by (node, host_ip, role, cluster) (node_namespace_pod:kube_pod_info:{node!=""}unless on (pod, namespace, cluster)kube_pod_status_phase{job="kube-state-metrics", phase="Succeeded"}> 0)
+    - expr: |-
+        count by (cluster, node) (
+                  node_namespace_pod:kube_pod_info:{node!=""}
+                unless on (pod, namespace, cluster,)
+                  (kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0)
+              unless on (pod, namespace, cluster,)
+                (
+                    (kube_pod_status_ready{condition="true",job="kube-state-metrics"} > 0)
+                  and on (pod, namespace, cluster,)
+                    (kube_pod_status_phase{job="kube-state-metrics",phase="Running"} > 0)
+                )
+            unless on (cluster, pod, namespace)
+              kube_pod_container_status_waiting_reason{job="kube-state-metrics",reason="ContainerCreating"} > 0
+        )
+        /
+        count by (cluster, node) (
+              node_namespace_pod:kube_pod_info:{node!=""}
+            unless on (pod, namespace, cluster,)
+              kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0
+        )
       record: node:pod_abnormal:ratio
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -167,7 +271,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster,node)(node_load1 / on(cluster,node) node:node_num_cpu:sum) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: sum by (cluster, node)(node_load1{job="node-exporter"} * on (cluster, namespace, pod) group_left (node) topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)) / node:node_num_cpu:sum
       record: node:node_load1_per_cpu:ratio
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -178,7 +282,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster,node)(node_load5 / on(cluster,node) node:node_num_cpu:sum) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: sum by (cluster, node)(node_load5{job="node-exporter"} * on (cluster, namespace, pod) group_left (node) topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)) / node:node_num_cpu:sum
       record: node:node_load5_per_cpu:ratio
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -189,7 +293,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster,node)(node_load15 / on(cluster,node) node:node_num_cpu:sum) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: sum by (cluster, node)(node_load15{job="node-exporter"} * on (cluster, namespace, pod) group_left (node) topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)) / node:node_num_cpu:sum
       record: node:node_load15_per_cpu:ratio
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -200,7 +304,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (node, cluster)(irate(node_disk_reads_completed_total{job="node-exporter"}[5m])) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, instance, namespace, pod) (
+              irate(node_disk_read_bytes_total{job="node-exporter"}[5m])
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:data_volume_iops_reads:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -211,7 +322,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (node, cluster)(irate(node_disk_writes_completed_total{job="node-exporter"}[5m])) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, instance, namespace, pod) (
+              irate(node_disk_writes_completed_total{job="node-exporter"}[5m])
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:data_volume_iops_writes:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -222,7 +340,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (node, cluster)(irate(node_disk_read_bytes_total{job="node-exporter"}[5m])) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, instance, namespace, pod) (
+              irate(node_disk_read_bytes_total{job="node-exporter"}[5m])
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:data_volume_throughput_bytes_read:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -233,7 +358,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (node, cluster)(irate(node_disk_written_bytes_total{job="node-exporter"}[5m])) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, instance, namespace, pod) (
+              irate(node_disk_written_bytes_total{job="node-exporter"}[5m])
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:data_volume_throughput_bytes_written:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -255,7 +387,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (node, cluster)(node_filesystem_files{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"}) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, instance, namespace, pod) (
+              node_filesystem_files{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"}
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:node_inodes_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -266,7 +405,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (node, cluster)(node_filesystem_files{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"} - node_filesystem_files_free{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"}) *  on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, instance, namespace, pod) (
+              node_filesystem_files{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"} - node_filesystem_files_free{job="node-exporter", device=~"/dev/.*",device!~"/dev/loop\\d+"}
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:node_inodes_used_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -277,7 +423,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (node, cluster) (irate(node_network_transmit_bytes_total{job="node-exporter",device!~"veth.+"}[5m]))* on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, instance, namespace, pod) (
+              irate(node_network_transmit_bytes_total{job="node-exporter", device!~"veth.+"}[5m])
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:node_net_bytes_transmitted:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -288,7 +441,14 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (node, cluster) (irate(node_network_receive_bytes_total{job="node-exporter",device!~"veth.+"}[5m]))* on(node, cluster) group_left(host_ip, role) max by(node, host_ip, role, cluster) (workspace_workload_node:kube_pod_info:{node!="",host_ip!=""})
+    - expr: |-
+        sum by (cluster, node) (
+            sum by (cluster, instance, namespace, pod) (
+              irate(node_network_receive_bytes_total{job="node-exporter", device!~"veth.+"}[5m])
+            )
+          * on (cluster, namespace, pod) group_left (node)
+            topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
+        )
       record: node:node_net_bytes_received:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:

@@ -35,7 +35,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum(irate(apiserver_request_total{job="apiserver"}[5m])) by (verb, cluster)
+    - expr: sum by (cluster, verb)(irate(apiserver_request_total{job="apiserver"}[5m]))
       record: apiserver:apiserver_request_total:sum_verb_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -57,7 +57,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum(irate(apiserver_request_duration_seconds_sum{job="apiserver",subresource!="log", verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m])) by (verb, cluster) / sum(irate(apiserver_request_duration_seconds_count{job="apiserver", subresource!="log",verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m])) by (verb, cluster)
+    - expr: sum by (cluster, verb)(irate(apiserver_request_duration_seconds_sum{job="apiserver",subresource!="log", verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))  / sum by (cluster, verb)(irate(apiserver_request_duration_seconds_count{job="apiserver", subresource!="log",verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))
       record: apiserver:apiserver_request_duration:avg_by_verb
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
