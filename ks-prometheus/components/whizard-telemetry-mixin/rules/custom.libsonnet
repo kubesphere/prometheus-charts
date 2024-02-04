@@ -91,17 +91,17 @@
           {
             record: 'node:node_memory_utilisation:ratio',
             expr: |||
-              node:node_memory_bytes_used_total:sum / node:node_memory_bytes_total:sum
+              node:node_memory_used_bytes:sum / node:node_memory_bytes_total:sum
             ||| % $._config,
           },
           {
-            record: 'node:node_memory_bytes_available:sum',
+            record: 'node:node_memory_available_bytes:sum',
             expr: |||
-              node:node_memory_bytes_total:sum - node:node_memory_bytes_used_total:sum
+              node:node_memory_bytes_total:sum - node:node_memory_used_bytes:sum
             ||| % $._config,
           },
           {
-            record: 'node:node_memory_bytes_used_total:sum',
+            record: 'node:node_memory_used_bytes:sum',
             expr: |||
               sum by (%(clusterLabel)s, node) (
                   (
@@ -137,11 +137,11 @@
           {
             record: 'node:node_device_filesystem_utilisation:ratio',
             expr: |||
-              node:node_device_filesystem_bytes_used_total:sum / node:node_device_filesystem_bytes_total:sum
+              node:node_device_filesystem_used_bytes:sum / node:node_device_filesystem_bytes_total:sum
             ||| % $._config,
           },
           {
-            record: 'node:node_device_filesystem_available_bytes_total:sum',
+            record: 'node:node_device_filesystem_available_bytes:sum',
             expr: |||
               sum by (%(clusterLabel)s, node, device) (
                     max by (namespace, pod, instance, device) (
@@ -153,7 +153,7 @@
             ||| % $._config,
           },
           {
-            record: 'node:node_device_filesystem_bytes_used_total:sum',
+            record: 'node:node_device_filesystem_used_bytes:sum',
             expr: |||
               sum by (%(clusterLabel)s, node, device) (
                     max by (%(clusterLabel)s, namespace, %(podLabel)s, instance, device) (
@@ -181,19 +181,19 @@
           {
             record: 'node:node_filesystem_utilisation:ratio',
             expr: |||
-              node:node_filesystem_bytes_used_total:sum / node:node_filesystem_bytes_total:sum
+              node:node_filesystem_used_bytes:sum / node:node_filesystem_bytes_total:sum
             ||| % $._config,
           },
           {
-            record: 'node:node_filesystem_available_bytes_total:sum',
+            record: 'node:node_filesystem_available_bytes:sum',
             expr: |||
-              sum by (%(clusterLabel)s, node)(node:node_device_filesystem_available_bytes_total:sum)
+              sum by (%(clusterLabel)s, node)(node:node_device_filesystem_available_bytes:sum)
             ||| % $._config,
           },
           {
-            record: 'node:node_filesystem_bytes_used_total:sum',
+            record: 'node:node_filesystem_used_bytes:sum',
             expr: |||
-              sum by (%(clusterLabel)s, node)(node:node_device_filesystem_bytes_used_total:sum)
+              sum by (%(clusterLabel)s, node)(node:node_device_filesystem_used_bytes:sum)
             ||| % $._config,
           },
           {
@@ -225,7 +225,7 @@
             ||| % $._config,
           },
           {
-            record: 'node:pod_abnormal:ratio',
+            record: 'node:pod_abnormal_utilisation:ratio',
             expr: |||
               count by (%(clusterLabel)s, node) (
                         node_namespace_pod:kube_pod_info:{node!=""}
@@ -291,7 +291,7 @@
             ||| % $._config,
           },
           {
-            record: 'node:data_volume_throughput_bytes_read:sum',
+            record: 'node:data_volume_throughput_read_bytes:sum_irate',
             expr: |||
               sum by (%(clusterLabel)s, node) (
                   sum by (%(clusterLabel)s, instance, namespace, %(podLabel)s) (
@@ -303,7 +303,7 @@
             ||| % $._config,
           },
           {
-            record: 'node:data_volume_throughput_bytes_written:sum',
+            record: 'node:data_volume_throughput_written_bytes:sum_irate',
             expr: |||
               sum by (%(clusterLabel)s, node) (
                   sum by (%(clusterLabel)s, instance, namespace, %(podLabel)s) (
@@ -345,7 +345,7 @@
             ||| % $._config,
           },
           {
-            record: 'node:node_net_bytes_transmitted:sum_irate',
+            record: 'node:node_net_transmit_bytes:sum_irate',
             expr: |||
               sum by (%(clusterLabel)s, node) (
                   sum by (%(clusterLabel)s, instance, namespace, %(podLabel)s) (
@@ -357,7 +357,7 @@
             ||| % $._config,
           },
           {
-            record: 'node:node_net_bytes_received:sum_irate',
+            record: 'node:node_net_receive_bytes:sum_irate',
             expr: |||
               sum by (%(clusterLabel)s, node) (
                   sum by (%(clusterLabel)s, instance, namespace, %(podLabel)s) (
@@ -410,7 +410,7 @@
             ||| % $._config,
           },
           {
-            record: 'namespace:workload_net_bytes_received:sum_irate',
+            record: 'namespace:workload_net_receive_bytes:sum_irate',
             expr: |||
               sum by (%(clusterLabel)s, namespace, workload, workload_type) (
                   sum by (%(clusterLabel)s, namespace, pod) (
@@ -422,7 +422,7 @@
             ||| % $._config,
           },
           {
-            record: 'namespace:workload_net_bytes_transmitted:sum_irate',
+            record: 'namespace:workload_net_transmit_bytes:sum_irate',
             expr: |||
               sum by (%(clusterLabel)s, namespace, workload, workload_type) (
                   sum by (%(clusterLabel)s, namespace, pod) (

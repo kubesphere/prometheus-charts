@@ -68,11 +68,11 @@ spec:
         node:node_cpu_utilization:ratio * node:node_num_cpu:sum
       record: node:node_cpu_utilization:sum
     - expr: |
-        node:node_memory_bytes_used_total:sum / node:node_memory_bytes_total:sum
+        node:node_memory_used_bytes:sum / node:node_memory_bytes_total:sum
       record: node:node_memory_utilisation:ratio
     - expr: |
-        node:node_memory_bytes_total:sum - node:node_memory_bytes_used_total:sum
-      record: node:node_memory_bytes_available:sum
+        node:node_memory_bytes_total:sum - node:node_memory_used_bytes:sum
+      record: node:node_memory_available_bytes:sum
     - expr: |
         sum by (cluster, node) (
             (
@@ -93,7 +93,7 @@ spec:
           * on (cluster, namespace, pod) group_left (node)
             topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
         )
-      record: node:node_memory_bytes_used_total:sum
+      record: node:node_memory_used_bytes:sum
     - expr: |
         sum by (cluster, node) (
             node_memory_MemTotal_bytes{job="node-exporter"}
@@ -102,7 +102,7 @@ spec:
         )
       record: node:node_memory_bytes_total:sum
     - expr: |
-        node:node_device_filesystem_bytes_used_total:sum / node:node_device_filesystem_bytes_total:sum
+        node:node_device_filesystem_used_bytes:sum / node:node_device_filesystem_bytes_total:sum
       record: node:node_device_filesystem_utilisation:ratio
     - expr: |
         sum by (cluster, node, device) (
@@ -112,7 +112,7 @@ spec:
           * on (cluster, namespace, pod) group_left (node)
             topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
         )
-      record: node:node_device_filesystem_available_bytes_total:sum
+      record: node:node_device_filesystem_available_bytes:sum
     - expr: |
         sum by (cluster, node, device) (
               max by (cluster, namespace, pod, instance, device) (
@@ -123,7 +123,7 @@ spec:
           * on (cluster, namespace, pod) group_left (node)
             topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
         )
-      record: node:node_device_filesystem_bytes_used_total:sum
+      record: node:node_device_filesystem_used_bytes:sum
     - expr: |
         sum by (cluster, node, device) (
               max by (cluster, namespace, pod, instance, device) (
@@ -134,14 +134,14 @@ spec:
         )
       record: node:node_device_filesystem_bytes_total:sum
     - expr: |
-        node:node_filesystem_bytes_used_total:sum / node:node_filesystem_bytes_total:sum
+        node:node_filesystem_used_bytes:sum / node:node_filesystem_bytes_total:sum
       record: node:node_filesystem_utilisation:ratio
     - expr: |
-        sum by (cluster, node)(node:node_device_filesystem_available_bytes_total:sum)
-      record: node:node_filesystem_available_bytes_total:sum
+        sum by (cluster, node)(node:node_device_filesystem_available_bytes:sum)
+      record: node:node_filesystem_available_bytes:sum
     - expr: |
-        sum by (cluster, node)(node:node_device_filesystem_bytes_used_total:sum)
-      record: node:node_filesystem_bytes_used_total:sum
+        sum by (cluster, node)(node:node_device_filesystem_used_bytes:sum)
+      record: node:node_filesystem_used_bytes:sum
     - expr: |
         sum by (cluster, node)(node:node_device_filesystem_bytes_total:sum)
       record: node:node_filesystem_bytes_total:sum
@@ -178,7 +178,7 @@ spec:
             unless on (pod, namespace, cluster,)
               kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0
         )
-      record: node:pod_abnormal:ratio
+      record: node:pod_abnormal_utilisation:ratio
     - expr: |
         sum by (cluster, node)(node_load1{job="node-exporter"} * on (cluster, namespace, pod) group_left (node) topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)) / node:node_num_cpu:sum
       record: node:node_load1_per_cpu:ratio
@@ -214,7 +214,7 @@ spec:
           * on (cluster, namespace, pod) group_left (node)
             topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
         )
-      record: node:data_volume_throughput_bytes_read:sum
+      record: node:data_volume_throughput_read_bytes:sum_irate
     - expr: |
         sum by (cluster, node) (
             sum by (cluster, instance, namespace, pod) (
@@ -223,7 +223,7 @@ spec:
           * on (cluster, namespace, pod) group_left (node)
             topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
         )
-      record: node:data_volume_throughput_bytes_written:sum
+      record: node:data_volume_throughput_written_bytes:sum_irate
     - expr: |
         node:node_inodes_used_total:sum / node:node_inodes_total:sum
       record: node:node_inodes_utilisation:ratio
@@ -253,7 +253,7 @@ spec:
           * on (cluster, namespace, pod) group_left (node)
             topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
         )
-      record: node:node_net_bytes_transmitted:sum_irate
+      record: node:node_net_transmit_bytes:sum_irate
     - expr: |
         sum by (cluster, node) (
             sum by (cluster, instance, namespace, pod) (
@@ -262,7 +262,7 @@ spec:
           * on (cluster, namespace, pod) group_left (node)
             topk by (cluster, namespace, pod) (1, node_namespace_pod:kube_pod_info:)
         )
-      record: node:node_net_bytes_received:sum_irate
+      record: node:node_net_receive_bytes:sum_irate
   - name: whizard-telemetry-namespace.rules
     rules:
     - expr: |
@@ -300,7 +300,7 @@ spec:
           * on (cluster, namespace, pod) group_left (workload, workload_type)
             workspace_workload_node:kube_pod_info:
         )
-      record: namespace:workload_net_bytes_received:sum_irate
+      record: namespace:workload_net_receive_bytes:sum_irate
     - expr: |
         sum by (cluster, namespace, workload, workload_type) (
             sum by (cluster, namespace, pod) (
@@ -309,7 +309,7 @@ spec:
           * on (cluster, namespace, pod) group_left (workload, workload_type)
             workspace_workload_node:kube_pod_info:
         )
-      record: namespace:workload_net_bytes_transmitted:sum_irate
+      record: namespace:workload_net_transmit_bytes:sum_irate
     - expr: |
         label_replace(sum(kube_daemonset_status_number_unavailable{job="kube-state-metrics"}) by (daemonset, namespace, cluster) / sum(kube_daemonset_status_desired_number_scheduled{job="kube-state-metrics"}) by (daemonset, namespace,cluster), "workload", "$1", "daemonset", "(.*)")
       labels:
