@@ -86,7 +86,7 @@ spec:
           * on (cluster, namespace, pod) group_left (workload, workload_type)
             workspace_workload_node:kube_pod_info:
         )
-      record: namespace:workload_net_bytes_received:sum_irate
+      record: namespace:workload_net_receive_bytes:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
         {{- with .Values.defaultRules.additionalRuleLabels }}
@@ -104,7 +104,7 @@ spec:
           * on (cluster, namespace, pod) group_left (workload, workload_type)
             workspace_workload_node:kube_pod_info:
         )
-      record: namespace:workload_net_bytes_transmitted:sum_irate
+      record: namespace:workload_net_transmit_bytes:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
         {{- with .Values.defaultRules.additionalRuleLabels }}

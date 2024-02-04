@@ -117,6 +117,7 @@ condition_map = {
     'whizard-telemetry-cluster.rules': ' .Values.defaultRules.rules.whizardTelemetry',
     'whizard-telemetry-namespace.rules': ' .Values.defaultRules.rules.whizardTelemetry',
     'whizard-telemetry-node.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'whizard-telemetry-etcd.rules': ' .Values.defaultRules.rules.whizardTelemetry',
 }
 
 alert_condition_map = {

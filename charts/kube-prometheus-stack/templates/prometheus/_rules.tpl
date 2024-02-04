@@ -18,4 +18,5 @@ rules:
   - "whizard-telemetry-cluster.rules"
   - "whizard-telemetry-namespace.rules"
   - "whizard-telemetry-node.rules"
+  - "whizard-telemetry-etcd.rules"
 {{- end }}
