@@ -2,7 +2,7 @@ apiVersion: v1
 appVersion: "0.5.0"
 description: A Helm chart for prometheus process-exporter
 name: ProcessExporter
-version: 0.5.3
+version: 0.5.4
 home: https://github.com/mumoshu/prometheus-process-exporter
 sources:
 - https://github.com/ncabatoff/process-exporter

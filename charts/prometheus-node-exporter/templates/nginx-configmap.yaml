@@ -6,9 +6,9 @@ metadata:
 data:
   nginx.conf: |-
     server {
-      listen {{ .Values.nginx.port }};
+      listen 127.0.0.1:{{ .Values.nginx.port }};
       location / {
-          proxy_pass http://localhost:8100;
+          proxy_pass http://localhost:{{ .Values.service.port }};
       }
       {{- if .Values.CalicoExporter.enabled }}
       location /metrics/calico {
