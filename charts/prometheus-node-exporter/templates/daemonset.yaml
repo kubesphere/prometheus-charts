@@ -40,7 +40,7 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "prometheus-node-exporter.serviceAccountName" . }}
       containers:
-        {{- $servicePort := ternary 8100 .Values.service.port .Values.kubeRBACProxy.enabled }}
+        {{- $servicePort := .Values.service.port }}
         - name: node-exporter
           image: {{ include "prometheus-node-exporter.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -184,13 +184,15 @@ spec:
             {{-  if .Values.kubeRBACProxy.extraArgs  }}
             {{- .Values.kubeRBACProxy.extraArgs | toYaml | nindent 12 }}
             {{-  end  }}
-            - --secure-listen-address=:{{ .Values.service.port}}
+            - --secure-listen-address=[$(HOST_IP)]:{{ .Values.service.port}}
             {{- if or .Values.CalicoExporter.enabled .Values.ProcessExporter.enabled }}
             - --upstream=http://127.0.0.1:{{ .Values.nginx.port }}/
             {{- else }}
             - --upstream=http://127.0.0.1:{{ $servicePort }}/
             {{- end }}
-            - --proxy-endpoints-port=8888
+            {{- if gt (int .Values.kubeRBACProxy.proxyEndpointsPort) 0 }}
+            - --proxy-endpoints-port={{ .Values.kubeRBACProxy.proxyEndpointsPort }}
+            {{- end }}
             - --config-file=/etc/kube-rbac-proxy-config/config-file.yaml
           volumeMounts:
             - name: kube-rbac-proxy-config
@@ -204,15 +206,23 @@ spec:
           ports:
             - containerPort: {{ .Values.service.port}}
               name: "http"
-            - containerPort: 8888
+          {{- if gt (int .Values.kubeRBACProxy.proxyEndpointsPort) 0 }}
+            - containerPort: {{ .Values.kubeRBACProxy.proxyEndpointsPort }}
               name: "http-healthz"
           readinessProbe:
             httpGet:
               scheme: HTTPS
-              port: 8888
+              port: {{ .Values.kubeRBACProxy.proxyEndpointsPort }}
               path: healthz
             initialDelaySeconds: 5
             timeoutSeconds: 5
+          {{- end }}
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
           {{- if .Values.kubeRBACProxy.resources }}
           resources:
           {{ toYaml .Values.kubeRBACProxy.resources | nindent 12 }}

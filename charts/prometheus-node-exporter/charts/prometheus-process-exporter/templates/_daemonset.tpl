@@ -8,7 +8,7 @@
   args:
     - --procfs=/host/proc
     - --config.path=/var/process-exporter/config.yml
-    - --web.listen-address=0.0.0.0:{{ .Values.ProcessExporter.service.innerPort }}
+    - --web.listen-address=127.0.0.1:{{ .Values.ProcessExporter.service.innerPort }}
 {{- if .Values.ProcessExporter.extraArgs }}
 {{ toYaml .Values.ProcessExporter.extraArgs | indent 12 }}
 {{- end }}

@@ -64,10 +64,13 @@ kubeRBACProxy:
   #  cpu: 10m
   #  memory: 32Mi
 
+  # If > 0, configure --proxy-endpoints-port, and enable readiness probe
+  proxyEndpointsPort: 0
+
 service:
   type: ClusterIP
-  port: 9100
-  targetPort: 9100
+  port: 19100
+  targetPort: 19100
   nodePort:
   portName: metrics
   listenOnAllInterfaces: true
@@ -475,7 +478,7 @@ nginx:
     repository: nginxinc/nginx-unprivileged
     tag: 1.24
     pullPolicy: IfNotPresent
-  port: 8102
+  port: 18102
   resources: {}
     # limits:
     #   cpu: 200m
@@ -515,9 +518,9 @@ ProcessExporter:
 
   service:
     type: ClusterIP
-    port: 9201
-    targetPort: 9201
-    innerPort: 9202
+    port: 19201
+    targetPort: 19201
+    innerPort: 19202
     nodePort:
     annotations:
       prometheus.io/scrape: "true"
@@ -657,9 +660,9 @@ CalicoExporter:
 
   service:
     type: ClusterIP
-    port: 9094
-    targetPort: 9094
-    innerPort: 9093
+    port: 19094
+    targetPort: 19094
+    innerPort: 19093
     nodePort:
     annotations:
       prometheus.io/scrape: "true"
