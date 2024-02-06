@@ -144,7 +144,7 @@
             record: 'node:node_device_filesystem_available_bytes:sum',
             expr: |||
               sum by (%(clusterLabel)s, node, device) (
-                    max by (namespace, pod, instance, device) (
+                    max by (%(clusterLabel)s, namespace, %(podLabel)s, instance, device) (
                         node_filesystem_avail_bytes{%(hostFilesystemDeviceSelector)s, %(nodeExporterSelector)s}
                     )
                 * on (%(clusterLabel)s, namespace, %(podLabel)s) group_left (node)
@@ -170,7 +170,7 @@
             record: 'node:node_device_filesystem_bytes_total:sum',
             expr: |||
               sum by (%(clusterLabel)s, node, device) (
-                    max by (%(clusterLabel)s, namespace, pod, instance, device) (
+                    max by (%(clusterLabel)s, namespace, %(podLabel)s, instance, device) (
                         node_filesystem_size_bytes{%(hostFilesystemDeviceSelector)s, %(nodeExporterSelector)s}
                     )
                 * on (%(clusterLabel)s, namespace, %(podLabel)s) group_left (node)
@@ -229,21 +229,21 @@
             expr: |||
               count by (%(clusterLabel)s, node) (
                         node_namespace_pod:kube_pod_info:{node!=""}
-                      unless on (pod, namespace, %(clusterLabel)s,)
+                      unless on (%(podLabel)s, namespace, %(clusterLabel)s)
                         (kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0)
-                    unless on (pod, namespace, %(clusterLabel)s,)
+                    unless on (%(podLabel)s, namespace, %(clusterLabel)s)
                       (
                           (kube_pod_status_ready{condition="true",job="kube-state-metrics"} > 0)
-                        and on (pod, namespace, %(clusterLabel)s,)
+                        and on (%(podLabel)s, namespace, %(clusterLabel)s)
                           (kube_pod_status_phase{job="kube-state-metrics",phase="Running"} > 0)
                       )
-                  unless on (%(clusterLabel)s, pod, namespace)
+                  unless on (%(clusterLabel)s, %(podLabel)s, namespace)
                     kube_pod_container_status_waiting_reason{job="kube-state-metrics",reason="ContainerCreating"} > 0
               )
               /
               count by (%(clusterLabel)s, node) (
                     node_namespace_pod:kube_pod_info:{node!=""}
-                  unless on (pod, namespace, %(clusterLabel)s,)
+                  unless on (%(podLabel)s, namespace, %(clusterLabel)s)
                     kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0
               )
             ||| % $._config,
