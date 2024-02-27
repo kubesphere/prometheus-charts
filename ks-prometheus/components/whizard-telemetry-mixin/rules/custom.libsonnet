@@ -205,7 +205,17 @@
           {
             record: 'node:node_pod_utilisation:ratio',
             expr: |||
-              node:node_pod_total:sum / node:node_pod_quota:sum
+              node:node_pod_running_total:sum / node:node_pod_quota:sum
+            ||| % $._config,
+          },
+          {
+            record: 'node:node_pod_running_total:sum',
+            expr: |||
+              count by(%(clusterLabel)s, node) (
+                  node_namespace_pod:kube_pod_info:
+                  unless on (%(clusterLabel)s, namespace, %(podLabel)s)
+                  (kube_pod_status_phase{%(kubeStateMetricsSelector)s, phase=~"Failed|Pending|Unknown|Succeeded"} > 0)
+              )
             ||| % $._config,
           },   
           {
