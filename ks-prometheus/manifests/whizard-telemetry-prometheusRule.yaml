@@ -146,8 +146,15 @@ spec:
         sum by (cluster, node)(node:node_device_filesystem_bytes_total:sum)
       record: node:node_filesystem_bytes_total:sum
     - expr: |
-        node:node_pod_total:sum / node:node_pod_quota:sum
+        node:node_pod_running_total:sum / node:node_pod_quota:sum
       record: node:node_pod_utilisation:ratio
+    - expr: |
+        count by(cluster, node) (
+            node_namespace_pod:kube_pod_info:
+            unless on (cluster, namespace, pod)
+            (kube_pod_status_phase{job="kube-state-metrics", phase=~"Failed|Pending|Unknown|Succeeded"} > 0)
+        )
+      record: node:node_pod_running_total:sum
     - expr: |
         sum by (cluster, node) (
             sum by (cluster, namespace, pod) (kube_pod_status_scheduled{job="kube-state-metrics"} > 0)

@@ -234,8 +234,24 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: node:node_pod_total:sum / node:node_pod_quota:sum
+    - expr: node:node_pod_running_total:sum / node:node_pod_quota:sum
       record: node:node_pod_utilisation:ratio
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        count by(cluster, node) (
+            node_namespace_pod:kube_pod_info:
+            unless on (cluster, namespace, pod)
+            (kube_pod_status_phase{job="kube-state-metrics", phase=~"Failed|Pending|Unknown|Succeeded"} > 0)
+        )
+      record: node:node_pod_running_total:sum
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
         {{- with .Values.defaultRules.additionalRuleLabels }}
