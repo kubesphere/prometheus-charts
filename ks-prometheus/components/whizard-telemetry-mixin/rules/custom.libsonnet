@@ -25,7 +25,7 @@
             record: 'workspace_workload_node:kube_pod_info:',
             expr: |||
               max by (%(clusterLabel)s, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
-                        kube_pod_info
+                        kube_pod_info{%(kubeStateMetricsSelector)s}
                       * on (%(clusterLabel)s, namespace) group_left (workspace)
                         max by (%(clusterLabel)s, namespace, workspace) (kube_namespace_labels{%(kubeStateMetricsSelector)s})
                     * on (%(clusterLabel)s, namespace, pod) group_left (workload, workload_type)
@@ -52,13 +52,19 @@
                     )
                 * on (%(clusterLabel)s, node) group_left (role)
                   max by (%(clusterLabel)s, node, role) (
-                      (
-                          kube_node_role{%(kubeStateMetricsSelector)s,role="worker"}
-                        unless ignoring (role)
-                          kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
-                      )
+                        kube_node_info{%(kubeStateMetricsSelector)s}
+                      * on (%(clusterLabel)s, node) group_left (role)
+                        max by (%(clusterLabel)s, node, role) (
+                            (
+                                kube_node_role{%(kubeStateMetricsSelector)s,role="worker"}
+                              unless ignoring (role)
+                                kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
+                            )
+                          or
+                            kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
+                        )
                     or
-                      kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
+                      kube_node_info{%(kubeStateMetricsSelector)s} unless on(%(clusterLabel)s,node) kube_node_role{%(kubeStateMetricsSelector)s}
                   )
               )
             ||| % $._config
