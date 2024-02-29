@@ -14,7 +14,7 @@ spec:
     rules:
     - expr: |
         max by (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
-                  kube_pod_info
+                  kube_pod_info{job="kube-state-metrics"}
                 * on (cluster, namespace) group_left (workspace)
                   max by (cluster, namespace, workspace) (kube_namespace_labels{job="kube-state-metrics"})
               * on (cluster, namespace, pod) group_left (workload, workload_type)
@@ -41,13 +41,19 @@ spec:
               )
           * on (cluster, node) group_left (role)
             max by (cluster, node, role) (
-                (
-                    kube_node_role{job="kube-state-metrics",role="worker"}
-                  unless ignoring (role)
-                    kube_node_role{job="kube-state-metrics",role="control-plane"}
-                )
+                  kube_node_info{job="kube-state-metrics"}
+                * on (cluster, node) group_left (role)
+                  max by (cluster, node, role) (
+                      (
+                          kube_node_role{job="kube-state-metrics",role="worker"}
+                        unless ignoring (role)
+                          kube_node_role{job="kube-state-metrics",role="control-plane"}
+                      )
+                    or
+                      kube_node_role{job="kube-state-metrics",role="control-plane"}
+                  )
               or
-                kube_node_role{job="kube-state-metrics",role="control-plane"}
+                kube_node_info{job="kube-state-metrics"} unless on(cluster,node) kube_node_role{job="kube-state-metrics"}
             )
         )
       record: 'workspace_workload_node:kube_pod_info:'
