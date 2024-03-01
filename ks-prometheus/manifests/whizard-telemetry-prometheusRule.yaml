@@ -428,3 +428,41 @@ spec:
       labels:
         quantile: "0.5"
       record: etcd:etcd_disk_backend_commit_duration:histogram_quantile
+  - name: whizard-telemetry-kube-scheduler.rules
+    rules:
+    - expr: |
+        histogram_quantile(0.99, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod, result))
+      labels:
+        quantile: "0.99"
+      record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
+    - expr: |
+        histogram_quantile(0.99, sum(rate(scheduler_scheduling_attempt_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod, result))
+      labels:
+        quantile: "0.99"
+      record: cluster_quantile:scheduler_scheduling_attempt_duration_seconds:histogram_quantile
+    - expr: |
+        histogram_quantile(0.9, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod, result))
+      labels:
+        quantile: "0.9"
+      record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
+    - expr: |
+        histogram_quantile(0.9, sum(rate(scheduler_scheduling_attempt_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod, result))
+      labels:
+        quantile: "0.9"
+      record: cluster_quantile:scheduler_scheduling_attempt_duration_seconds:histogram_quantile
+    - expr: |
+        histogram_quantile(0.5, sum(rate(scheduler_e2e_scheduling_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod, result))
+      labels:
+        quantile: "0.5"
+      record: cluster_quantile:scheduler_e2e_scheduling_duration_seconds:histogram_quantile
+    - expr: |
+        histogram_quantile(0.5, sum(rate(scheduler_scheduling_attempt_duration_seconds_bucket{job="kube-scheduler"}[5m])) without(instance, pod, result))
+      labels:
+        quantile: "0.5"
+      record: cluster_quantile:scheduler_scheduling_attempt_duration_seconds:histogram_quantile
+    - expr: |
+        sum by(cluster) (rate(scheduler_e2e_scheduling_duration_seconds_sum{job="kube-scheduler"}[5m])) / sum by(cluster) (rate(scheduler_e2e_scheduling_duration_seconds_count{job="kube-scheduler"}[5m]))
+      record: cluster:scheduler_e2e_scheduling_duration_seconds:avg
+    - expr: |
+        sum by(cluster) (rate(scheduler_scheduling_attempt_duration_seconds_sum{job="kube-scheduler"}[5m])) / sum by(cluster) (rate(scheduler_scheduling_attempt_duration_seconds_count{job="kube-scheduler"}[5m]))
+      record: cluster:scheduler_scheduling_attempt_duration_seconds:avg

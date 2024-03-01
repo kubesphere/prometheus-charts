@@ -19,4 +19,5 @@ rules:
   - "whizard-telemetry-namespace.rules"
   - "whizard-telemetry-node.rules"
   - "whizard-telemetry-etcd.rules"
+  - "whizard-telemetry-kube-scheduler.rules"
 {{- end }}
