@@ -11,6 +11,7 @@
     podLabel: 'pod',
     etcd_selector: 'job=~".*etcd.*"',
     etcd_instance_labels: 'instance',
+    kubeSchedulerSelector: 'job="kube-scheduler"',
   },
 
   prometheusRules+:: {
@@ -657,6 +658,36 @@
 
         ],
       },
+      {
+        name: "whizard-telemetry-kube-scheduler.rules",
+        rules: [
+          {
+            record: 'cluster_quantile:%s:histogram_quantile' % metric,
+            expr: |||
+              histogram_quantile(%(quantile)s, sum(rate(%(metric)s_bucket{%(kubeSchedulerSelector)s}[5m])) without(instance, %(podLabel)s, result))
+            ||| % ({ quantile: quantile, metric: metric } + $._config),
+            labels: {
+              quantile: quantile,
+            },
+          }
+          for quantile in ['0.99', '0.9', '0.5']
+          for metric in [
+            'scheduler_e2e_scheduling_duration_seconds',
+            'scheduler_scheduling_attempt_duration_seconds',
+          ]
+        ] + [
+          {
+            record: 'cluster:%s:avg' % metric,
+            expr: |||
+              sum by(cluster) (rate(%(metric)s_sum{%(kubeSchedulerSelector)s}[5m])) / sum by(cluster) (rate(%(metric)s_count{%(kubeSchedulerSelector)s}[5m]))
+            ||| % ({ metric: metric } + $._config),
+          }
+          for metric in [
+            'scheduler_e2e_scheduling_duration_seconds',
+            'scheduler_scheduling_attempt_duration_seconds',
+          ]
+        ],
+      }
     ],
   },
 }
