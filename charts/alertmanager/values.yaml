@@ -3,7 +3,8 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-global: {}
+global:
+  imagePullSecrets: []
 
 replicaCount: 1
 
@@ -318,7 +319,7 @@ configmapReload:
     defaultRegistry: quay.io
     registry: ""
     repository: prometheus-operator/prometheus-config-reloader
-    tag: v0.66.0
+    tag: v0.68.0
     pullPolicy: IfNotPresent
 
   # containerPort: 9533

@@ -34,9 +34,9 @@ spec:
         {{- end }}
     spec:
       automountServiceAccountToken: {{ .Values.automountServiceAccountToken }}
-      {{- with .Values.imagePullSecrets }}
+      {{- with (include "alertmanager.imagePullSecrets" .) }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+        {{- . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "alertmanager.serviceAccountName" . }}
       {{- with .Values.dnsConfig }}

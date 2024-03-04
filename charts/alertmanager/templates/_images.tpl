@@ -43,3 +43,11 @@
 {{- $_dict := (dict "imageRoot" .Values.configmapReload.image "global" .Values.global) }}
 {{- include "alertmanager.common.images.image" $_dict }}
 {{- end -}}
+
+{{- define "alertmanager.imagePullSecrets" -}}
+{{- if .Values.imagePullSecrets }}
+    {{- toYaml .Values.imagePullSecrets }}
+{{- else if and .Values.global .Values.global.imagePullSecrets }}
+    {{- toYaml .Values.global.imagePullSecrets }}
+{{- end }}
+{{- end -}}
