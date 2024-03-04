@@ -8,6 +8,34 @@ entries:
           url: https://github.com/prometheus-community/helm-charts
     apiVersion: v2
     appVersion: v0.26.0
+    created: "2024-03-04T07:21:53.712854392Z"
+    description: The Alertmanager handles alerts sent by client applications such
+      as the Prometheus server.
+    digest: 876940e28a7f417ea267e90ae301c2b9a337e0ce17cb8bf8bfc97d7917017d3f
+    home: https://prometheus.io/
+    icon: https://raw.githubusercontent.com/prometheus/prometheus.github.io/master/assets/prometheus_logo-cb55bb5c346.png
+    keywords:
+    - monitoring
+    kubeVersion: '>=1.19.0-0'
+    maintainers:
+    - email: monotek23@gmail.com
+      name: monotek
+    - email: naseem@transit.app
+      name: naseemkullah
+    name: alertmanager
+    sources:
+    - https://github.com/prometheus/alertmanager
+    type: application
+    urls:
+    - https://github.com/WhizardTelemetry/prometheus-charts/releases/download/alertmanager-1.8.2/alertmanager-1.8.2.tgz
+    version: 1.8.2
+  - annotations:
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Chart Source
+          url: https://github.com/prometheus-community/helm-charts
+    apiVersion: v2
+    appVersion: v0.26.0
     created: "2024-02-29T08:45:17.188304859Z"
     description: The Alertmanager handles alerts sent by client applications such
       as the Prometheus server.
@@ -52847,4 +52875,4 @@ entries:
     urls:
     - https://prometheus-community.github.io/helm-charts/prometheus-to-sd-0.1.0.tgz
     version: 0.1.0
-generated: "2024-03-01T12:59:55.191043669Z"
+generated: "2024-03-04T07:21:53.715001063Z"
