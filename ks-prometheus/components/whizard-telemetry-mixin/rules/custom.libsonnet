@@ -26,7 +26,51 @@
             record: 'workspace_workload_node:kube_pod_info:',
             expr: |||
               max by (%(clusterLabel)s, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
-                        kube_pod_info{%(kubeStateMetricsSelector)s}
+                          kube_pod_info{%(kubeStateMetricsSelector)s,node!=""}
+                        * on (%(clusterLabel)s, namespace) group_left (workspace)
+                          max by (%(clusterLabel)s, namespace, workspace) (kube_namespace_labels{%(kubeStateMetricsSelector)s})
+                      * on (%(clusterLabel)s, namespace, pod) group_left (workload, workload_type)
+                        max by (%(clusterLabel)s, namespace, pod, workload, workload_type) (
+                            label_join(
+                              label_join(
+                                kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
+                                "workload",
+                                "$1",
+                                "owner_name"
+                              ),
+                              "workload_type",
+                              "$1",
+                              "owner_kind"
+                            )
+                          or
+                              kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
+                            * on (%(clusterLabel)s, namespace, pod) group_left (workload_type, workload)
+                              namespace_workload_pod:kube_pod_owner:relabel
+                        )
+                    * on (%(clusterLabel)s, namespace, pod) group_left (qos_class)
+                      max by (%(clusterLabel)s, namespace, pod, qos_class) (
+                        kube_pod_status_qos_class{%(kubeStateMetricsSelector)s} > 0
+                      )
+                  * on (%(clusterLabel)s, node) group_left (role)
+                    max by (%(clusterLabel)s, node, role) (
+                          kube_node_info{%(kubeStateMetricsSelector)s}
+                        * on (%(clusterLabel)s, node) group_left (role)
+                          max by (%(clusterLabel)s, node, role) (
+                              (
+                                  kube_node_role{%(kubeStateMetricsSelector)s,role="worker"}
+                                unless ignoring (role)
+                                  kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
+                              )
+                            or
+                              kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
+                          )
+                      or
+                          kube_node_info{%(kubeStateMetricsSelector)s}
+                        unless on (%(clusterLabel)s, node)
+                          kube_node_role{%(kubeStateMetricsSelector)s}
+                    )
+                or
+                        kube_pod_info{%(kubeStateMetricsSelector)s,node=""}
                       * on (%(clusterLabel)s, namespace) group_left (workspace)
                         max by (%(clusterLabel)s, namespace, workspace) (kube_namespace_labels{%(kubeStateMetricsSelector)s})
                     * on (%(clusterLabel)s, namespace, pod) group_left (workload, workload_type)
@@ -44,29 +88,13 @@
                           )
                         or
                             kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
-                          * on (namespace, pod) group_left (workload_type, workload)
+                          * on (%(clusterLabel)s, namespace, pod) group_left (workload_type, workload)
                             namespace_workload_pod:kube_pod_owner:relabel
                       )
                   * on (%(clusterLabel)s, namespace, pod) group_left (qos_class)
                     max by (%(clusterLabel)s, namespace, pod, qos_class) (
                       kube_pod_status_qos_class{%(kubeStateMetricsSelector)s} > 0
                     )
-                * on (%(clusterLabel)s, node) group_left (role)
-                  max by (%(clusterLabel)s, node, role) (
-                        kube_node_info{%(kubeStateMetricsSelector)s}
-                      * on (%(clusterLabel)s, node) group_left (role)
-                        max by (%(clusterLabel)s, node, role) (
-                            (
-                                kube_node_role{%(kubeStateMetricsSelector)s,role="worker"}
-                              unless ignoring (role)
-                                kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
-                            )
-                          or
-                            kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
-                        )
-                    or
-                      kube_node_info{%(kubeStateMetricsSelector)s} unless on(%(clusterLabel)s,node) kube_node_role{%(kubeStateMetricsSelector)s}
-                  )
               )
             ||| % $._config
           },
@@ -238,7 +266,7 @@
           {
             record: 'node:node_pod_quota:sum',
             expr: |||
-              sum by (%(clusterLabel)s, node) (kube_node_status_allocatable{job="kube-state-metrics",resource="pods"})
+              sum by (%(clusterLabel)s, node) (kube_node_status_allocatable{%(kubeStateMetricsSelector)s,resource="pods"})
             ||| % $._config,
           },
           {
@@ -247,21 +275,21 @@
               count by (%(clusterLabel)s, node) (
                         node_namespace_pod:kube_pod_info:{node!=""}
                       unless on (%(podLabel)s, namespace, %(clusterLabel)s)
-                        (kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0)
+                        (kube_pod_status_phase{%(kubeStateMetricsSelector)s,phase="Succeeded"} > 0)
                     unless on (%(podLabel)s, namespace, %(clusterLabel)s)
                       (
-                          (kube_pod_status_ready{condition="true",job="kube-state-metrics"} > 0)
+                          (kube_pod_status_ready{condition="true",%(kubeStateMetricsSelector)s} > 0)
                         and on (%(podLabel)s, namespace, %(clusterLabel)s)
-                          (kube_pod_status_phase{job="kube-state-metrics",phase="Running"} > 0)
+                          (kube_pod_status_phase{%(kubeStateMetricsSelector)s,phase="Running"} > 0)
                       )
                   unless on (%(clusterLabel)s, %(podLabel)s, namespace)
-                    kube_pod_container_status_waiting_reason{job="kube-state-metrics",reason="ContainerCreating"} > 0
+                    kube_pod_container_status_waiting_reason{%(kubeStateMetricsSelector)s,reason="ContainerCreating"} > 0
               )
               /
               count by (%(clusterLabel)s, node) (
                     node_namespace_pod:kube_pod_info:{node!=""}
                   unless on (%(podLabel)s, namespace, %(clusterLabel)s)
-                    kube_pod_status_phase{job="kube-state-metrics",phase="Succeeded"} > 0
+                    kube_pod_status_phase{%(kubeStateMetricsSelector)s,phase="Succeeded"} > 0
               )
             ||| % $._config,
           },
