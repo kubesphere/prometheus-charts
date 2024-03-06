@@ -1976,7 +1976,7 @@ kube-state-metrics:
   image:
     registry: docker.io
     repository: kubesphere/kube-state-metrics
-    tag: "v2.8.2"
+    tag: "v2.10.1"
 
   resources:
     limits:
@@ -2038,7 +2038,6 @@ kube-state-metrics:
   nodeSelector:
     kubernetes.io/os: linux
   metricDenylist:
-    - kube_pod_container_status_.*terminated_reason
     - kube_.+_version
     - kube_.+_created
     - kube_deployment_(spec_paused|spec_strategy_rollingupdate_.+)
