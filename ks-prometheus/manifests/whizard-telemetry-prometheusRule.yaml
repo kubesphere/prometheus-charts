@@ -14,7 +14,51 @@ spec:
     rules:
     - expr: |
         max by (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
-                  kube_pod_info{job="kube-state-metrics"}
+                    kube_pod_info{job="kube-state-metrics",node!=""}
+                  * on (cluster, namespace) group_left (workspace)
+                    max by (cluster, namespace, workspace) (kube_namespace_labels{job="kube-state-metrics"})
+                * on (cluster, namespace, pod) group_left (workload, workload_type)
+                  max by (cluster, namespace, pod, workload, workload_type) (
+                      label_join(
+                        label_join(
+                          kube_pod_owner{job="kube-state-metrics",owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
+                          "workload",
+                          "$1",
+                          "owner_name"
+                        ),
+                        "workload_type",
+                        "$1",
+                        "owner_kind"
+                      )
+                    or
+                        kube_pod_owner{job="kube-state-metrics",owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
+                      * on (cluster, namespace, pod) group_left (workload_type, workload)
+                        namespace_workload_pod:kube_pod_owner:relabel
+                  )
+              * on (cluster, namespace, pod) group_left (qos_class)
+                max by (cluster, namespace, pod, qos_class) (
+                  kube_pod_status_qos_class{job="kube-state-metrics"} > 0
+                )
+            * on (cluster, node) group_left (role)
+              max by (cluster, node, role) (
+                    kube_node_info{job="kube-state-metrics"}
+                  * on (cluster, node) group_left (role)
+                    max by (cluster, node, role) (
+                        (
+                            kube_node_role{job="kube-state-metrics",role="worker"}
+                          unless ignoring (role)
+                            kube_node_role{job="kube-state-metrics",role="control-plane"}
+                        )
+                      or
+                        kube_node_role{job="kube-state-metrics",role="control-plane"}
+                    )
+                or
+                    kube_node_info{job="kube-state-metrics"}
+                  unless on (cluster, node)
+                    kube_node_role{job="kube-state-metrics"}
+              )
+          or
+                  kube_pod_info{job="kube-state-metrics",node=""}
                 * on (cluster, namespace) group_left (workspace)
                   max by (cluster, namespace, workspace) (kube_namespace_labels{job="kube-state-metrics"})
               * on (cluster, namespace, pod) group_left (workload, workload_type)
@@ -32,29 +76,13 @@ spec:
                     )
                   or
                       kube_pod_owner{job="kube-state-metrics",owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
-                    * on (namespace, pod) group_left (workload_type, workload)
+                    * on (cluster, namespace, pod) group_left (workload_type, workload)
                       namespace_workload_pod:kube_pod_owner:relabel
                 )
             * on (cluster, namespace, pod) group_left (qos_class)
               max by (cluster, namespace, pod, qos_class) (
                 kube_pod_status_qos_class{job="kube-state-metrics"} > 0
               )
-          * on (cluster, node) group_left (role)
-            max by (cluster, node, role) (
-                  kube_node_info{job="kube-state-metrics"}
-                * on (cluster, node) group_left (role)
-                  max by (cluster, node, role) (
-                      (
-                          kube_node_role{job="kube-state-metrics",role="worker"}
-                        unless ignoring (role)
-                          kube_node_role{job="kube-state-metrics",role="control-plane"}
-                      )
-                    or
-                      kube_node_role{job="kube-state-metrics",role="control-plane"}
-                  )
-              or
-                kube_node_info{job="kube-state-metrics"} unless on(cluster,node) kube_node_role{job="kube-state-metrics"}
-            )
         )
       record: 'workspace_workload_node:kube_pod_info:'
   - name: whizard-telemetry-node.rules
