@@ -1299,6 +1299,8 @@ kubelet:
     ##
     honorLabels: true
 
+    honorTimestamps: true
+
     ## Enable scraping /metrics/cadvisor from kubelet's service
     ##
     cAdvisor: true
