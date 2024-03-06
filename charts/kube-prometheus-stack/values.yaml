@@ -2008,17 +2008,31 @@ kube-state-metrics:
         resources:
           - groupVersionKind:
               group: iam.kubesphere.io
-              kind: "User"
+              kind: "ClusterRoleBinding"
               version: "v1beta1"
             metricNamePrefix: ""
-            labelsFromPath:
-              user: [metadata, name]
             metrics:
-              - name: "kubesphere_user_info"
-                help: "information about iam.kubesphere.io/user."
+              - name: "kubesphere_clusterrolebinding_info"
+                help: "information about iam.kubesphere.io/clusterrolebinding."
                 each:
                   type: Info
-                  info: {}
+                  info:
+                    labelsFromPath:
+                      clusterrolebinding: [metadata, name]
+          - groupVersionKind:
+              group: iam.kubesphere.io
+              kind: "ClusterRole"
+              version: "v1beta1"
+            metricNamePrefix: ""
+            metrics:
+              - name: "kubesphere_clusterrole_info"
+                help: "information about iam.kubesphere.io/clusterrole."
+                each:
+                  type: Info
+                  info:
+                    labelsFromPath:
+                      clusterrole: [metadata, name]
+
 
   rbac:
     create: true
@@ -2027,10 +2041,7 @@ kube-state-metrics:
       resources: ["customresourcedefinitions"]
       verbs: ["list", "watch"]
     - apiGroups: ["iam.kubesphere.io"]
-      resources: ["users"]
-      verbs: ["list", "watch"]
-    - apiGroups: ["rbac.authorization.k8s.io"]
-      resources: ["clusterrolebindings", "clusterroles", "rolebindings", "roles"]
+      resources: ["clusterroles", "clusterrolebindings"]
       verbs: ["list", "watch"]
 
 
@@ -2054,13 +2065,10 @@ kube-state-metrics:
     - kube_poddisruptionbudget_status_.+
     - kube_replicationcontroller_.+
     - kube_(hpa|replicaset|replicationcontroller)_.+_generation
-    - kube_clusterrole_info
-    - kube_clusterrolebinding_info
   metricLabelsAllowlist:
     - namespaces=[kubesphere.io/workspace]
     - storageclasses=[storage.kubesphere.io/storagetype]
-  metricAnnotationsAllowList:
-    - clusterroles=[kubesphere.io/creator]
+  metricAnnotationsAllowList: []
   collectors:
     - certificatesigningrequests
     - configmaps
@@ -2090,8 +2098,6 @@ kube-state-metrics:
     - storageclasses
     - validatingwebhookconfigurations
     - volumeattachments
-    - clusterroles
-    - clusterrolebindings
 
 
   prometheus:
