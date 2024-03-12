@@ -689,6 +689,31 @@ entries:
     urls:
     - https://github.com/prometheus-community/helm-charts/releases/download/alertmanager-0.1.0/alertmanager-0.1.0.tgz
     version: 0.1.0
+  dcgm-exporter:
+  - apiVersion: v2
+    appVersion: 3.4.0
+    created: "2024-03-12T03:05:58.905673954Z"
+    description: A Helm chart for DCGM exporter
+    digest: 6b2e9cf00437148829a0a2a4ccebf3b41ecf2d8456162ab6edcda8b1cc571826
+    home: https://github.com/nvidia/dcgm-exporter/
+    icon: https://assets.nvidiagrid.net/ngc/logos/DCGM.png
+    keywords:
+    - gpu
+    - cuda
+    - compute
+    - monitoring
+    - telemetry
+    - tesla
+    kubeVersion: '>= 1.19.0-0'
+    maintainers:
+    - name: glowkey
+    - name: nvvfedorov
+    name: dcgm-exporter
+    sources:
+    - https://github.com/nvidia/dcgm-exporter
+    urls:
+    - https://github.com/WhizardTelemetry/prometheus-charts/releases/download/dcgm-exporter-3.4.0/dcgm-exporter-3.4.0.tgz
+    version: 3.4.0
   kube-prometheus-stack:
   - annotations:
       artifacthub.io/license: Apache-2.0
@@ -53127,4 +53152,4 @@ entries:
     urls:
     - https://prometheus-community.github.io/helm-charts/prometheus-to-sd-0.1.0.tgz
     version: 0.1.0
-generated: "2024-03-06T08:35:00.84363702Z"
+generated: "2024-03-12T03:05:58.908872324Z"
