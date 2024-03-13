@@ -2,8 +2,9 @@
 # Containers for the prometheus-process-exporter daemonset.
 */}}
 {{- define "prometheus-process-exporter.daemonset.containers" -}}
+{{- $imageDict := dict "Values" (dict "image" .Values.ProcessExporter.image "global" .Values.global) }}
 - name: process-exporter
-  image: "{{ .Values.ProcessExporter.image.repository }}:{{ .Values.ProcessExporter.image.tag }}"
+  image: '{{ include "prometheus-process-exporter.common.image" $imageDict }}'
   imagePullPolicy: {{ .Values.ProcessExporter.image.pullPolicy }}
   args:
     - --procfs=/host/proc
