@@ -240,7 +240,7 @@ spec:
         {{- end }}
         {{- if or .Values.CalicoExporter.enabled .Values.ProcessExporter.enabled }}
         - name: nginx
-          image: {{ .Values.nginx.image.repository }}:{{ .Values.nginx.image.tag }}
+          image: {{ include "prometheus-node-exporter.nginx.image" . }}
           imagePullPolicy: {{ .Values.nginx.image.pullPolicy }}
           ports:
           - name: nginx
