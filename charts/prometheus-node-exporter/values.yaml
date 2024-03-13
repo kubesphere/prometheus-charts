@@ -475,8 +475,9 @@ extraManifests: []
 # Nginx configuration for prometheus-node-exporter
 nginx:
   image:
+    registry: ""
     repository: nginxinc/nginx-unprivileged
-    tag: 1.24
+    tag: '1.24'
     pullPolicy: IfNotPresent
   port: 18102
   resources: {}
@@ -729,6 +730,6 @@ CalicoExporter:
 
   kubeRbacProxy:
     image:
-      repository: kubesphere/kube-rbac-proxy
+      repository: brancz/kube-rbac-proxy
       tag: v0.14.0
     resources: {}

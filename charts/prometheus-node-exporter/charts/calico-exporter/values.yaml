@@ -98,8 +98,9 @@ tolerations:
 
 kubeRbacProxy:
   image:
+    defaultRegistry: "quay.io"
     registry: ""
-    repository: kubesphere/kube-rbac-proxy
+    repository: brancz/kube-rbac-proxy
     tag: v0.14.0
     digest: ""
     pullPolicy: IfNotPresent
