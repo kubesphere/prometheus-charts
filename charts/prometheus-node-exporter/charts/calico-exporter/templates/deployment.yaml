@@ -16,13 +16,18 @@ spec:
       securityContext:
 {{ toYaml .Values.securityContext | indent 8 }}
 {{- end }}
+      {{- with (include "calico-exporter.imagePullSecrets" .) }}
+      imagePullSecrets:
+        {{- . | nindent 6 }}
+      {{- end }}
       containers:
         - args:
             - --logtostderr
             - --secure-listen-address=0.0.0.0:{{ .Values.service.targetPort }}
             - --tls-cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305
             - --upstream=http://127.0.0.1:{{ .Values.service.innerPort }}/
-          image: "{{ .Values.kubeRbacProxy.image }}:{{ .Values.kubeRbacProxy.tag }}"
+          image: '{{ include "calico-exporter.kubeRbacProxy.image" . }}'
+          imagePullPolicy: {{ .Values.kubeRbacProxy.image.pullPolicy }}
           name: kube-rbac-proxy
           ports:
             - containerPort: {{ .Values.service.targetPort }}
@@ -39,7 +44,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          image: '{{ include "calico-exporter.common.image" . }}'
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - --web.listen-address=127.0.0.1:{{ .Values.service.innerPort }}
@@ -56,10 +61,10 @@ spec:
       affinity:
 {{ toYaml .Values.affinity | indent 8 }}
 {{- end }}
-{{- if .Values.nodeSelector }}
+      {{- with (include "calico-exporter.nodeSelector" .) }}
       nodeSelector:
-{{ toYaml .Values.nodeSelector | indent 8 }}
-{{- end }}
+        {{- . | nindent 8 }}
+      {{- end }}
     {{- with .Values.tolerations }}
       tolerations:
 {{ toYaml . | indent 8 }}
