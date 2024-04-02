@@ -457,6 +457,9 @@
             },
             "type": "object"
         },
+        "replicaAutoSet": {
+            "type": "boolean"
+        },
         "replicaCount": {
             "type": "integer"
         },

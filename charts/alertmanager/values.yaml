@@ -6,7 +6,12 @@
 global:
   imagePullSecrets: []
 
+# The alertmanager replica count.
+# If you want to control it by yourself, please firstly configure the replicaAutoSet item as false.
 replicaCount: 1
+# If true, will ignore the upper replicaCount iterm and auto set alertmanager replica count by the node num:
+#   set the alertmanager replica count as 1 when the node num < 3, or set as 3.
+replicaAutoSet: true
 
 # Number of old history to retain to allow rollback
 # Default Kubernetes value is set to 10

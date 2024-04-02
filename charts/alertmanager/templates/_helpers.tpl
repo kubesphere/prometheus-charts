@@ -109,3 +109,22 @@ labelNameLengthLimit: {{ . }}
 labelValueLengthLimit: {{ . }}
 {{- end }}
 {{- end }}
+
+{{- define "alertmanager.replicas" -}}
+  {{- $replicas := 0 -}}
+  {{ if .Values.replicaAutoSet }}
+    {{- $nodeList := lookup "v1" "Node" "" "" -}}
+    {{- if $nodeList }}
+        {{- if lt (len $nodeList.items) 3 -}}
+            {{- $replicas = 1 -}}
+        {{- else -}}
+            {{- $replicas = 3 -}}
+        {{- end -}}
+    {{- else }}
+        {{- $replicas = .Values.replicaCount -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $replicas = .Values.replicaCount -}}
+  {{- end -}}
+  {{- $replicas -}}
+{{- end -}}
