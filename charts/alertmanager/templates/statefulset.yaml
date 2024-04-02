@@ -11,7 +11,7 @@ metadata:
   {{- end }}
   namespace: {{ include "alertmanager.namespace" . }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ include "alertmanager.replicas" . }}
   minReadySeconds: {{ .Values.minReadySeconds }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
