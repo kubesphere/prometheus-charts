@@ -1,0 +1,64 @@
+{{- if .Values.prometheus.monitor.enabled }}
+{{- $apiVersion := .Values.prometheus.monitor.apiVersion | default "monitoring.coreos.com/v1" }}
+{{- if .Capabilities.APIVersions.Has (printf "%s/ServiceMonitor" $apiVersion) }}
+apiVersion: {{ $apiVersion }}
+kind: ServiceMonitor
+metadata:
+  name: {{ include "alertmanager.fullname" . }}
+  namespace: {{ include "alertmanager.namespace" . }}
+  labels:
+    {{- include "alertmanager.labels" . | nindent 4 }}
+    {{- with .Values.prometheus.monitor.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  jobLabel: {{ default "app.kubernetes.io/name" .Values.prometheus.monitor.jobLabel }}
+  {{- include "servicemonitor.scrapeLimits" .Values.prometheus.monitor | nindent 2 }}
+  {{- with .Values.prometheus.monitor.podTargetLabels }}
+  podTargetLabels:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  selector:
+    matchLabels:
+    {{- with .Values.prometheus.monitor.selectorOverride }}
+      {{- toYaml . | nindent 6 }}
+    {{- else }}
+      {{- include "alertmanager.selectorLabels" . | nindent 6 }}
+    {{- end }}
+  {{- with .Values.prometheus.monitor.attachMetadata }}
+  attachMetadata:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  endpoints:
+    - port: http
+      scheme: {{ .Values.prometheus.monitor.scheme }}
+      {{- with .Values.prometheus.monitor.basicAuth }}
+      basicAuth:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.prometheus.monitor.bearerTokenFile }}
+      bearerTokenFile: {{ . }}
+      {{- end }}
+      {{- with .Values.prometheus.monitor.tlsConfig }}
+      tlsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.prometheus.monitor.proxyUrl }}
+      proxyUrl: {{ . }}
+      {{- end }}
+      {{- with .Values.prometheus.monitor.interval }}
+      interval: {{ . }}
+      {{- end }}
+      {{- with .Values.prometheus.monitor.scrapeTimeout }}
+      scrapeTimeout: {{ . }}
+      {{- end }}
+      {{- with .Values.prometheus.monitor.relabelings }}
+      relabelings:
+        {{- tpl (toYaml .) $ | nindent 8 }}
+      {{- end }}
+      {{- with .Values.prometheus.monitor.metricRelabelings }}
+      metricRelabelings:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}
+{{- end }}
