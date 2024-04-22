@@ -20,81 +20,83 @@
         name: 'whizard-telemetry-cluster.rules',
         rules: [
           {
-            // pod attribute tuple tuple (cluster, node, workspace, namespace, pod, qos_class, workload, workload_type, node_role, host_ip) ==> 1
+            // pod attribute tuple tuple (cluster, node, workspace, namespace, pod, qos_class, phase, workload, workload_type) ==> 1
             // 
             // must kms version > 2.8.0
             record: 'workspace_workload_node:kube_pod_info:',
             expr: |||
-              max by (%(clusterLabel)s, node, workspace, namespace, pod, qos_class, workload, workload_type, role, host_ip) (
-                          kube_pod_info{%(kubeStateMetricsSelector)s,node!=""}
-                        * on (%(clusterLabel)s, namespace) group_left (workspace)
-                          max by (%(clusterLabel)s, namespace, workspace) (kube_namespace_labels{%(kubeStateMetricsSelector)s})
-                      * on (%(clusterLabel)s, namespace, pod) group_left (workload, workload_type)
-                        max by (%(clusterLabel)s, namespace, pod, workload, workload_type) (
-                            label_join(
-                              label_join(
-                                kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
-                                "workload",
-                                "$1",
-                                "owner_name"
-                              ),
-                              "workload_type",
-                              "$1",
-                              "owner_kind"
-                            )
-                          or
-                              kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
-                            * on (%(clusterLabel)s, namespace, pod) group_left (workload_type, workload)
-                              namespace_workload_pod:kube_pod_owner:relabel
+              max by (%(clusterLabel)s, node, workspace, namespace, pod, qos_class, phase, workload, workload_type) (
+                        kube_pod_info{%(kubeStateMetricsSelector)s}
+                      * on (%(clusterLabel)s, namespace, pod) group_left (qos_class)
+                        max by (%(clusterLabel)s, namespace, pod, qos_class) (
+                          kube_pod_status_qos_class{%(kubeStateMetricsSelector)s} > 0
                         )
-                    * on (%(clusterLabel)s, namespace, pod) group_left (qos_class)
-                      max by (%(clusterLabel)s, namespace, pod, qos_class) (
-                        kube_pod_status_qos_class{%(kubeStateMetricsSelector)s} > 0
-                      )
-                  * on (%(clusterLabel)s, node) group_left (role)
-                    max by (%(clusterLabel)s, node, role) (
-                          kube_node_info{%(kubeStateMetricsSelector)s}
-                        * on (%(clusterLabel)s, node) group_left (role)
-                          max by (%(clusterLabel)s, node, role) (
+                    * on (%(clusterLabel)s, namespace, pod) group_left (phase)
+                      max by (%(clusterLabel)s, namespace, pod, phase) (kube_pod_status_phase{%(kubeStateMetricsSelector)s} > 0)
+                  * on (%(clusterLabel)s, namespace, pod) group_left (workload, workload_type)
+                    max by (%(clusterLabel)s, namespace, pod, workload, workload_type) (
+                        label_join(
+                          label_join(
+                            kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
+                            "workload",
+                            "$1",
+                            "owner_name"
+                          ),
+                          "workload_type",
+                          "$1",
+                          "owner_kind"
+                        )
+                      or
+                          kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
+                        * on (%(clusterLabel)s, namespace, pod) group_left (workload_type, workload)
+                          namespace_workload_pod:kube_pod_owner:relabel
+                    )
+                * on (%(clusterLabel)s, namespace) group_left (workspace)
+                  max by (%(clusterLabel)s, namespace, workspace) (kube_namespace_labels{%(kubeStateMetricsSelector)s})
+              )
+            ||| % $._config
+          },
+          {
+            // node attribute tuple (cluster, node, role, host_ip) ==> 1
+            // role priority: edge > control-plane > worker > other > ""
+            //
+            record: 'node_role_ip:kube_node_info:',
+            expr: |||
+              label_replace(
+                max by (%(clusterLabel)s, node, role, internal_ip) (
+                      kube_node_info{%(kubeStateMetricsSelector)s}
+                    * on (%(clusterLabel)s, node) group_left (role)
+                      max by (%(clusterLabel)s, node, role) (
                               (
                                   kube_node_role{%(kubeStateMetricsSelector)s,role="worker"}
                                 unless ignoring (role)
-                                  kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
+                                  kube_node_role{%(kubeStateMetricsSelector)s,role=~"control-plane|edge"}
                               )
                             or
-                              kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
-                          )
-                      or
-                          kube_node_info{%(kubeStateMetricsSelector)s}
-                        unless on (%(clusterLabel)s, node)
-                          kube_node_role{%(kubeStateMetricsSelector)s}
-                    )
-                or
-                        kube_pod_info{%(kubeStateMetricsSelector)s,node=""}
-                      * on (%(clusterLabel)s, namespace) group_left (workspace)
-                        max by (%(clusterLabel)s, namespace, workspace) (kube_namespace_labels{%(kubeStateMetricsSelector)s})
-                    * on (%(clusterLabel)s, namespace, pod) group_left (workload, workload_type)
-                      max by (%(clusterLabel)s, namespace, pod, workload, workload_type) (
-                          label_join(
-                            label_join(
-                              kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
-                              "workload",
-                              "$1",
-                              "owner_name"
-                            ),
-                            "workload_type",
-                            "$1",
-                            "owner_kind"
-                          )
+                              (
+                                  kube_node_role{%(kubeStateMetricsSelector)s,role="control-plane"}
+                                unless ignoring (role)
+                                  kube_node_role{%(kubeStateMetricsSelector)s,role="edge"}
+                              )
+                          or
+                            kube_node_role{%(kubeStateMetricsSelector)s,role="edge"}
                         or
-                            kube_pod_owner{%(kubeStateMetricsSelector)s,owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
-                          * on (%(clusterLabel)s, namespace, pod) group_left (workload_type, workload)
-                            namespace_workload_pod:kube_pod_owner:relabel
+                          topk by (%(clusterLabel)s, node) (
+                            1,
+                              kube_node_role{%(kubeStateMetricsSelector)s}
+                            unless ignoring (role)
+                              (kube_node_role{%(kubeStateMetricsSelector)s,role=~"edge|control-plane|worker|fakenode"})
+                          )
                       )
-                  * on (%(clusterLabel)s, namespace, pod) group_left (qos_class)
-                    max by (%(clusterLabel)s, namespace, pod, qos_class) (
-                      kube_pod_status_qos_class{%(kubeStateMetricsSelector)s} > 0
-                    )
+                  or
+                      kube_node_info{%(kubeStateMetricsSelector)s}
+                    unless on (%(clusterLabel)s, node)
+                      kube_node_role{%(kubeStateMetricsSelector)s}
+                ),
+                "host_ip",
+                "$1",
+                "internal_ip",
+                "(.*)"
               )
             ||| % $._config
           },
