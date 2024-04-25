@@ -1,6 +1,7 @@
 {{- if and .Values.servicePerReplica.enabled .Values.ingressPerReplica.enabled }}
 {{- $pathType := .Values.ingressPerReplica.pathType  }}
-{{- $count := .Values.replicaCount | int -}}
+{{- $replicas := include "alertmanager.replicas" . }}
+{{- $count := $replicas | int -}}
 {{- $servicePort := .Values.service.port -}}
 {{- $ingressValues := .Values.ingressPerReplica -}}
 {{- $fullName := include "alertmanager.fullname" . }}
