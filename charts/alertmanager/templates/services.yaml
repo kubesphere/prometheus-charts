@@ -54,7 +54,8 @@ spec:
       targetPort: http
       protocol: TCP
       name: http
-    {{- if or (gt (int .Values.replicaCount) 1) (.Values.additionalPeers) }}
+    {{- $replicas := include "alertmanager.replicas" . }}
+    {{- if or (gt (int $replicas) 1) (.Values.additionalPeers) }}
     - port: {{ .Values.service.clusterPort }}
       targetPort: clusterpeer-tcp
       protocol: TCP

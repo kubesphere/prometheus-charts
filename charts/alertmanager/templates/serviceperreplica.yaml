@@ -1,5 +1,6 @@
 {{- if and .Values.servicePerReplica.enabled }}
-{{- $count := .Values.replicaCount | int -}}
+{{- $replicas := include "alertmanager.replicas" . }}
+{{- $count := $replicas | int -}}
 {{- $serviceValues := .Values.servicePerReplica -}}
 apiVersion: v1
 kind: List
