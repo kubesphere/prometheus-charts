@@ -13,7 +13,9 @@ metadata:
 spec:
   {{- $replicas := include "alertmanager.replicas" . }}
   replicas: {{ $replicas }}
+  {{- if .Values.minReadySeconds }}
   minReadySeconds: {{ .Values.minReadySeconds }}
+  {{- end }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
   selector:
     matchLabels:
