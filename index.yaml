@@ -36374,6 +36374,44 @@ entries:
           url: https://github.com/prometheus-community/helm-charts
     apiVersion: v2
     appVersion: 1.6.0
+    created: "2024-05-29T09:45:39.618510623Z"
+    dependencies:
+    - condition: ProcessExporter.enabled
+      name: ProcessExporter
+      repository: file://charts/prometheus-process-exporter
+      version: 0.5.*
+    - condition: CalicoExporter.enabled
+      name: CalicoExporter
+      repository: file://charts/calico-exporter
+      version: 0.3.*
+    description: A Helm chart for prometheus node-exporter
+    digest: 5abe0c85883439af7ca69d0a97c7c602f02e19aa8e2d6411d9ad91569a9d7853
+    home: https://github.com/prometheus/node_exporter/
+    keywords:
+    - node-exporter
+    - prometheus
+    - exporter
+    maintainers:
+    - email: gianrubio@gmail.com
+      name: gianrubio
+    - email: zanhsieh@gmail.com
+      name: zanhsieh
+    - email: rootsandtrees@posteo.de
+      name: zeritti
+    name: prometheus-node-exporter
+    sources:
+    - https://github.com/prometheus/node_exporter/
+    type: application
+    urls:
+    - https://github.com/WhizardTelemetry/prometheus-charts/releases/download/prometheus-node-exporter-4.21.6/prometheus-node-exporter-4.21.6.tgz
+    version: 4.21.6
+  - annotations:
+      artifacthub.io/license: Apache-2.0
+      artifacthub.io/links: |
+        - name: Chart Source
+          url: https://github.com/prometheus-community/helm-charts
+    apiVersion: v2
+    appVersion: 1.6.0
     created: "2024-05-29T01:52:23.06291183Z"
     dependencies:
     - condition: ProcessExporter.enabled
@@ -53441,4 +53479,4 @@ entries:
     urls:
     - https://prometheus-community.github.io/helm-charts/prometheus-to-sd-0.1.0.tgz
     version: 0.1.0
-generated: "2024-05-29T01:52:23.064821727Z"
+generated: "2024-05-29T09:45:39.620677151Z"
