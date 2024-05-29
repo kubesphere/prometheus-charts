@@ -639,7 +639,7 @@ CalicoExporter:
   # Declare variables to be passed into your templates.
   image:
     repository: kubesphere/calico-exporter
-    tag: v0.2.0
+    tag: v0.3.0
     pullPolicy: IfNotPresent
 
   ## Creates a Prometheus Operator ServiceMonitor
@@ -704,7 +704,7 @@ CalicoExporter:
     runAsNonRoot: true
     runAsUser: 65534
 
-  hostNetwork: false
+  hostNetwork: true
 
   ## Assign a group of affinity scheduling rules
   ##
