@@ -27,11 +27,20 @@ calicoService:
   annotations:
     prometheus.io/scrape: "true"
 
-service:
+bgpService:
   type: ClusterIP
   port: 9094
   targetPort: 9094
   innerPort: 9093
+  nodePort:
+  annotations:
+    prometheus.io/scrape: "true"
+
+ippoolService:
+  type: ClusterIP
+  port: 9096
+  targetPort: 9096
+  innerPort: 9095
   nodePort:
   annotations:
     prometheus.io/scrape: "true"
