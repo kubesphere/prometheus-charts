@@ -12,7 +12,7 @@ data:
       }
       {{- if .Values.CalicoExporter.enabled }}
       location /metrics/calico {
-          proxy_pass http://localhost:{{ .Values.CalicoExporter.service.innerPort }}/metrics;
+          proxy_pass http://localhost:{{ .Values.CalicoExporter.bgpService.innerPort }}/metrics;
       }
       {{- end }}
       {{- if .Values.ProcessExporter.enabled }}

@@ -659,11 +659,20 @@ CalicoExporter:
     annotations:
       prometheus.io/scrape: "true"
 
-  service:
+  bgpService:
     type: ClusterIP
     port: 19094
     targetPort: 19094
     innerPort: 19093
+    nodePort:
+    annotations:
+      prometheus.io/scrape: "true"
+
+  ippoolService:
+    type: ClusterIP
+    port: 19096
+    targetPort: 19096
+    innerPort: 19095
     nodePort:
     annotations:
       prometheus.io/scrape: "true"

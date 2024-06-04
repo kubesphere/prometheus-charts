@@ -12,7 +12,7 @@
   image: '{{ include "calico-exporter.common.image" $imageDict }}'
   imagePullPolicy: {{ .Values.CalicoExporter.image.pullPolicy }}
   args:
-    - --web.listen-address=127.0.0.1:{{ .Values.CalicoExporter.service.innerPort }}
+    - --web.listen-address=127.0.0.1:{{ .Values.CalicoExporter.bgpService.innerPort }}
     - --collector.enable-collectors=bgp
   resources:
 {{ toYaml .Values.CalicoExporter.resources | indent 12 }}
