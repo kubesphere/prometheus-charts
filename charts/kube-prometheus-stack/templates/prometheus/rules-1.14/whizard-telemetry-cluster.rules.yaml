@@ -111,4 +111,22 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
+    - expr: |-
+        max by (cluster, namespace, pod, pod_ip, host_ip, node) (
+              kube_pod_info{job="kube-state-metrics"}
+            * on (cluster, namespace, pod, uid) group_left ()
+              kube_pod_start_time{job="kube-state-metrics"}
+          )
+        * on (cluster, namespace, pod) group_left (workspace, qos_class, phase)
+          workspace_workload_node:kube_pod_info:
+      record: 'pod_start_time:kube_pod_info:'
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
 {{- end }}

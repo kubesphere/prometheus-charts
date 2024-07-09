@@ -100,6 +100,19 @@
               )
             ||| % $._config
           },
+          {
+            //
+            record: 'pod_start_time:kube_pod_info:',
+            expr: |||
+              max by (cluster, namespace, pod, pod_ip, host_ip, node) (
+                    kube_pod_info{%(kubeStateMetricsSelector)s}
+                  * on (cluster, namespace, pod, uid) group_left ()
+                    kube_pod_start_time{%(kubeStateMetricsSelector)s}
+                )
+              * on (cluster, namespace, pod) group_left (workspace, qos_class, phase)
+                workspace_workload_node:kube_pod_info:
+            ||| % $._config
+          },
         ],
       },
       {
