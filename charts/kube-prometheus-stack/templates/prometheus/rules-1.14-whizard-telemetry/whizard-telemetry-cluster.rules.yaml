@@ -1,0 +1,133 @@
+{{- /*
+Generated from 'whizard-telemetry-cluster.rules' group from file://manifests/whizard-telemetry-prometheusRule.yaml
+Do not change in-place! In order to change this file first read following link:
+https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
+*/ -}}
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.whizardTelemetry }}
+{{- $kubeStateMetricsJob := include "kube-prometheus-stack-kube-state-metrics.name" . }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-telemetry-cluster.rules" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: whizard-telemetry-cluster.rules
+    rules:
+    - expr: |-
+        max by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, node, workspace, namespace, pod, qos_class, phase, workload, workload_type) (
+                  kube_pod_info{job="{{ $kubeStateMetricsJob }}"}
+                * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (qos_class)
+                  max by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod, qos_class) (
+                    kube_pod_status_qos_class{job="{{ $kubeStateMetricsJob }}"} > 0
+                  )
+              * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (phase)
+                max by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod, phase) (kube_pod_status_phase{job="{{ $kubeStateMetricsJob }}"} > 0)
+            * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (workload, workload_type)
+              max by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod, workload, workload_type) (
+                  label_join(
+                    label_join(
+                      kube_pod_owner{job="{{ $kubeStateMetricsJob }}",owner_kind!~"ReplicaSet|DaemonSet|StatefulSet|Job"},
+                      "workload",
+                      "$1",
+                      "owner_name"
+                    ),
+                    "workload_type",
+                    "$1",
+                    "owner_kind"
+                  )
+                or
+                    kube_pod_owner{job="{{ $kubeStateMetricsJob }}",owner_kind=~"ReplicaSet|DaemonSet|StatefulSet|Job"}
+                  * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (workload_type, workload)
+                    namespace_workload_pod:kube_pod_owner:relabel
+              )
+          * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace) group_left (workspace)
+            max by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, workspace) (kube_namespace_labels{job="{{ $kubeStateMetricsJob }}"})
+        )
+      record: 'workspace_workload_node:kube_pod_info:'
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        label_replace(
+          max by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, node, role, internal_ip) (
+                kube_node_info{job="{{ $kubeStateMetricsJob }}"}
+              * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, node) group_left (role)
+                max by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, node, role) (
+                        (
+                            kube_node_role{job="{{ $kubeStateMetricsJob }}",role="worker"}
+                          unless ignoring (role)
+                            kube_node_role{job="{{ $kubeStateMetricsJob }}",role=~"control-plane|edge"}
+                        )
+                      or
+                        (
+                            kube_node_role{job="{{ $kubeStateMetricsJob }}",role="control-plane"}
+                          unless ignoring (role)
+                            kube_node_role{job="{{ $kubeStateMetricsJob }}",role="edge"}
+                        )
+                    or
+                      kube_node_role{job="{{ $kubeStateMetricsJob }}",role="edge"}
+                  or
+                    topk by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, node) (
+                      1,
+                        kube_node_role{job="{{ $kubeStateMetricsJob }}"}
+                      unless ignoring (role)
+                        (kube_node_role{job="{{ $kubeStateMetricsJob }}",role=~"edge|control-plane|worker|fakenode"})
+                    )
+                )
+            or
+                kube_node_info{job="{{ $kubeStateMetricsJob }}"}
+              unless on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, node)
+                kube_node_role{job="{{ $kubeStateMetricsJob }}"}
+          ),
+          "host_ip",
+          "$1",
+          "internal_ip",
+          "(.*)"
+        )
+      record: 'node_role_ip:kube_node_info:'
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        max by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod, pod_ip, host_ip, node) (
+              kube_pod_info{job="{{ $kubeStateMetricsJob }}"}
+            * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod, uid) group_left ()
+              kube_pod_start_time{job="{{ $kubeStateMetricsJob }}"}
+          )
+        * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (workspace, qos_class, phase)
+          workspace_workload_node:kube_pod_info:
+      record: 'pod_start_time:kube_pod_info:'
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+{{- end }}

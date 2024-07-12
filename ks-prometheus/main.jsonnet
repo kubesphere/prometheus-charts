@@ -1,7 +1,7 @@
 local kp =
   (import 'kube-prometheus/main.libsonnet') +
   (import './platforms/platforms.libsonnet') +
-  (import 'kube-prometheus/addons/anti-affinity.libsonnet') +
+  // (import 'kube-prometheus/addons/anti-affinity.libsonnet') +
   // Uncomment the following imports to enable its patches
   // (import 'kube-prometheus/addons/anti-affinity.libsonnet') +
   // (import 'kube-prometheus/addons/managed-cluster.libsonnet') +
@@ -79,11 +79,11 @@ local prometheusRulesRemoveNullGroup(prometheusRule) = if prometheusRule.kind !=
 
     
 // { 'prometheus-operator-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.prometheusOperator.prometheusRule)) } +
-{ 'kube-prometheus-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.kubePrometheus.prometheusRule)) } +
+// { 'kube-prometheus-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.kubePrometheus.prometheusRule)) } +
 // { 'alertmanager-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.alertmanager.prometheusRule)) } +
 // { 'kube-state-metrics-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.kubeStateMetrics.prometheusRule)) } + 
-{ 'kubernetes-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.kubernetesControlPlane.prometheusRule)) } +
-{ 'node-exporter-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.nodeExporter.prometheusRule)) } +
+// { 'kubernetes-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.kubernetesControlPlane.prometheusRule)) } +
+// { 'node-exporter-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.nodeExporter.prometheusRule)) } +
 // { 'prometheus-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.prometheus.prometheusRule)) }+
 { 'whizard-telemetry-prometheusRule': prometheusRulesRemoveNullGroup(prometheusRulesWithoutAlerting(kp.whizardTelemetry.prometheusRule)) }
 

@@ -1,0 +1,154 @@
+{{- /*
+Generated from 'whizard-telemetry-namespace.rules' group from file://manifests/whizard-telemetry-prometheusRule.yaml
+Do not change in-place! In order to change this file first read following link:
+https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
+*/ -}}
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if and (semverCompare ">=1.14.0-0" $kubeTargetVersion) (semverCompare "<9.9.9-9" $kubeTargetVersion) .Values.defaultRules.create .Values.defaultRules.rules.whizardTelemetry }}
+{{- $kubeStateMetricsJob := include "kube-prometheus-stack-kube-state-metrics.name" . }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ printf "%s-%s" (include "kube-prometheus-stack.fullname" .) "whizard-telemetry-namespace.rules" | trunc 63 | trimSuffix "-" }}
+  namespace: {{ template "kube-prometheus-stack.namespace" . }}
+  labels:
+    app: {{ template "kube-prometheus-stack.name" . }}
+{{ include "kube-prometheus-stack.labels" . | indent 4 }}
+{{- if .Values.defaultRules.labels }}
+{{ toYaml .Values.defaultRules.labels | indent 4 }}
+{{- end }}
+{{- if .Values.defaultRules.annotations }}
+  annotations:
+{{ toYaml .Values.defaultRules.annotations | indent 4 }}
+{{- end }}
+spec:
+  groups:
+  - name: whizard-telemetry-namespace.rules
+    rules:
+    - expr: |-
+        sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, workload, workload_type) (
+            sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) (
+              node_namespace_pod_container:container_cpu_usage_seconds_total:sum_irate
+            )
+          * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
+      record: namespace:workload_cpu_usage:sum
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, workload, workload_type) (
+            sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) (
+              container_memory_usage_bytes{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}
+            )
+          * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
+      record: namespace:workload_memory_usage:sum
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, workload, workload_type) (
+            sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) (
+              node_namespace_pod_container:container_memory_working_set_bytes
+            )
+          * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
+      record: namespace:workload_memory_wo_cache_usage:sum
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, workload, workload_type) (
+            sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) (
+              irate(container_network_receive_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}[5m])
+            )
+          * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
+      record: namespace:workload_net_receive_bytes:sum_irate
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: |-
+        sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, workload, workload_type) (
+            sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) (
+              irate(container_network_transmit_bytes_total{job="kubelet", metrics_path="/metrics/cadvisor", image!=""}[5m])
+            )
+          * on ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, namespace, pod) group_left (workload, workload_type)
+            workspace_workload_node:kube_pod_info:
+        )
+      record: namespace:workload_net_transmit_bytes:sum_irate
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+      labels:
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+    - expr: label_replace(sum(kube_daemonset_status_number_unavailable{job="{{ $kubeStateMetricsJob }}"}) by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}daemonset, namespace, cluster) / sum(kube_daemonset_status_desired_number_scheduled{job="{{ $kubeStateMetricsJob }}"}) by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}daemonset, namespace,cluster), "workload", "$1", "daemonset", "(.*)")
+      labels:
+        workload_type: daemonset
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      record: namespace:workload_unavailable_replicas:ratio
+    - expr: label_replace(sum(kube_deployment_status_replicas_unavailable{job="{{ $kubeStateMetricsJob }}"}) by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}deployment, namespace, cluster) / sum(kube_deployment_spec_replicas{job="{{ $kubeStateMetricsJob }}"}) by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}deployment, namespace, cluster), "workload", "$1", "deployment", "(.*)")
+      labels:
+        workload_type: deployment
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      record: namespace:workload_unavailable_replicas:ratio
+    - expr: label_replace(1 - sum(kube_statefulset_status_replicas_ready{job="{{ $kubeStateMetricsJob }}"}) by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}statefulset, namespace, cluster) / sum(kube_statefulset_status_replicas{job="{{ $kubeStateMetricsJob }}"}) by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}statefulset, namespace, cluster), "workload", "$1", "statefulset", "(.*)")
+      labels:
+        workload_type: statefulset
+      {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+        {{- with .Values.defaultRules.additionalRuleLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      record: namespace:workload_unavailable_replicas:ratio
+{{- end }}
