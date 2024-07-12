@@ -13,7 +13,6 @@ tests:
   # 1572
   - it: should have tolerations if affinity is not set
     set:
-      alertmanager.enabled: true
       alertmanager.alertmanagerSpec.tolerations:
         - key: "key1"
           operator: "Equal"

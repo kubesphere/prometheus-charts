@@ -27,98 +27,125 @@ def change_style(style, representer):
     return new_representer
 
 
+refs = {
+    # https://github.com/prometheus-operator/kube-prometheus
+    'ref.kube-prometheus': 'b5b59bc0b45508b85647eb7a84b96dc167be15f1',
+    # https://github.com/kubernetes-monitoring/kubernetes-mixin
+    'ref.kubernetes-mixin': 'de834e9a291b49396125768f041e2078763f48b5',
+    # https://github.com/etcd-io/etcd
+    'ref.etcd': '1c22e7b36bc5d8543f1646212f2960f9fe503b8c',
+}
+
 # Source files list
 charts = [
-    # {
-    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/alertmanager-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubePrometheus-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubernetesControlPlane-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/kubeStateMetrics-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/nodeExporter-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/prometheus-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/prometheusOperator-prometheusRule.yaml',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0'
-    # },
-    # {
-    #     'source': 'https://raw.githubusercontent.com/etcd-io/etcd/main/contrib/mixin/mixin.libsonnet',
-    #     'destination': '../templates/prometheus/rules-1.14',
-    #     'min_kubernetes': '1.14.0-0',
-    #     'is_mixin': True
-    # },
-
-
     {
-        'source': 'file://../../../ks-prometheus/manifests/kube-prometheus-prometheusRule.yaml',
+        'git': 'https://github.com/prometheus-operator/kube-prometheus.git',
+        'branch': refs['ref.kube-prometheus'],
+        'source': 'main.libsonnet',
+        'cwd': 'jsonnet/kube-prometheus',
         'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
+        'min_kubernetes': '1.14.0-0',
+        'mixin': """
+        local kp =
+          (import 'main.libsonnet') + {
+            values+:: {
+              common+: {
+                namespace: 'monitoring',
+              },
+              kubernetesControlPlane+: {
+                kubeProxy: true,
+              },
+            },
+            grafana: {},
+          };
+
+        {
+          groups: std.flattenArrays([
+            kp[component][resource].spec.groups
+            for component in std.objectFields(kp)
+            for resource in std.filter(
+              function(resource)
+                kp[component][resource].kind == 'PrometheusRule',
+              std.objectFields(kp[component])
+            )
+          ]),
+        }
+        """
     },
     {
-        'source': 'file://../../../ks-prometheus/manifests/kubernetes-prometheusRule.yaml',
+        'git': 'https://github.com/kubernetes-monitoring/kubernetes-mixin.git',
+        'branch': refs['ref.kubernetes-mixin'],
+        'source': 'windows.libsonnet',
+        'cwd': 'rules',
         'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
-    },  
-    {
-        'source': 'file://../../../ks-prometheus/manifests/node-exporter-prometheusRule.yaml',
-        'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
+        'min_kubernetes': '1.14.0-0',
+        'mixin': """
+        local kp =
+            { prometheusAlerts+:: {}, prometheusRules+:: {}} +
+            (import "windows.libsonnet") +
+            {'_config': {
+                'clusterLabel': 'cluster',
+                'windowsExporterSelector': 'job="windows-exporter"',
+                'kubeStateMetricsSelector': 'job="kube-state-metrics"',
+            }};
+
+        kp.prometheusAlerts + kp.prometheusRules
+        """
     },
     {
-        'source': 'file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml',
+        'git': 'https://github.com/etcd-io/etcd.git',
+        'branch': refs['ref.etcd'],
+        'source': 'mixin.libsonnet',
+        'cwd': 'contrib/mixin',
         'destination': '../templates/prometheus/rules-1.14',
-        'min_kubernetes': '1.14.0-0'
+        'min_kubernetes': '1.14.0-0',
+        'mixin': """
+        local kp = { prometheusAlerts+:: {}, prometheusRules+:: {}} + (import "mixin.libsonnet");
+
+        kp.prometheusAlerts + kp.prometheusRules
+        """
     },
 ]
 
 # Additional conditions map
 condition_map = {
-    # kube-prometheus-prometheusRule.yaml
-    'kube-prometheus-general.rules': ' .Values.defaultRules.rules.kubePrometheusGeneral',
-    'kube-prometheus-node-recording.rules': ' .Values.defaultRules.rules.kubePrometheusNodeRecording',
-
-    # kubernetes-prometheusRule.yaml
+    'alertmanager.rules': ' .Values.defaultRules.rules.alertmanager',
+    'config-reloaders': ' .Values.defaultRules.rules.configReloaders',
+    'etcd': ' .Values.kubeEtcd.enabled .Values.defaultRules.rules.etcd',
+    'general.rules': ' .Values.defaultRules.rules.general',
+    'k8s.rules.container_cpu_usage_seconds_total': ' .Values.defaultRules.rules.k8sContainerCpuUsageSecondsTotal',
+    'k8s.rules.container_memory_cache': ' .Values.defaultRules.rules.k8sContainerMemoryCache',
+    'k8s.rules.container_memory_rss': ' .Values.defaultRules.rules.k8sContainerMemoryRss',
+    'k8s.rules.container_memory_swap': ' .Values.defaultRules.rules.k8sContainerMemorySwap',
+    'k8s.rules.container_memory_working_set_bytes': ' .Values.defaultRules.rules.k8sContainerMemoryWorkingSetBytes',
+    'k8s.rules.container_resource': ' .Values.defaultRules.rules.k8sContainerResource',
+    'k8s.rules.pod_owner': ' .Values.defaultRules.rules.k8sPodOwner',
     'kube-apiserver-availability.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverAvailability',
     'kube-apiserver-burnrate.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverBurnrate',
     'kube-apiserver-histogram.rules': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverHistogram',
-    'k8s.rules': ' .Values.defaultRules.rules.k8s',
+    'kube-apiserver-slos': ' .Values.kubeApiServer.enabled .Values.defaultRules.rules.kubeApiserverSlos',
+    'kube-prometheus-general.rules': ' .Values.defaultRules.rules.kubePrometheusGeneral',
+    'kube-prometheus-node-recording.rules': ' .Values.defaultRules.rules.kubePrometheusNodeRecording',
     'kube-scheduler.rules': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerRecording',
-    'node.rules': ' .Values.defaultRules.rules.node',
+    'kube-state-metrics': ' .Values.defaultRules.rules.kubeStateMetrics',
     'kubelet.rules': ' .Values.kubelet.enabled .Values.defaultRules.rules.kubelet',
-
-    # node-exporter-prometheusRule.yaml
+    'kubernetes-apps': ' .Values.defaultRules.rules.kubernetesApps',
+    'kubernetes-resources': ' .Values.defaultRules.rules.kubernetesResources',
+    'kubernetes-storage': ' .Values.defaultRules.rules.kubernetesStorage',
+    'kubernetes-system': ' .Values.defaultRules.rules.kubernetesSystem',
+    'kubernetes-system-kube-proxy': ' .Values.kubeProxy.enabled .Values.defaultRules.rules.kubeProxy',
+    'kubernetes-system-apiserver': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-apiserver
+    'kubernetes-system-kubelet': ' .Values.defaultRules.rules.kubernetesSystem', # kubernetes-system was split into more groups in 1.14, one of them is kubernetes-system-kubelet
+    'kubernetes-system-controller-manager': ' .Values.kubeControllerManager.enabled .Values.defaultRules.rules.kubeControllerManager',
+    'kubernetes-system-scheduler': ' .Values.kubeScheduler.enabled .Values.defaultRules.rules.kubeSchedulerAlerting',
     'node-exporter.rules': ' .Values.defaultRules.rules.nodeExporterRecording',
-
-    # custom rules
-    'whizard-telemetry-apiserver.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-telemetry-cluster.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-telemetry-namespace.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-telemetry-node.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-telemetry-etcd.rules': ' .Values.defaultRules.rules.whizardTelemetry',
-    'whizard-telemetry-kube-scheduler.rules': ' .Values.defaultRules.rules.whizardTelemetry',
+    'node-exporter': ' .Values.defaultRules.rules.nodeExporterAlerting',
+    'node.rules': ' .Values.defaultRules.rules.node',
+    'node-network': ' .Values.defaultRules.rules.network',
+    'prometheus-operator': ' .Values.defaultRules.rules.prometheusOperator',
+    'prometheus': ' .Values.defaultRules.rules.prometheus', # kube-prometheus >= 1.14 uses prometheus as group instead of prometheus.rules
+    'windows.node.rules': ' .Values.windowsMonitoring.enabled .Values.defaultRules.rules.windows',
+    'windows.pod.rules': ' .Values.windowsMonitoring.enabled .Values.defaultRules.rules.windows',
 }
 
 alert_condition_map = {
@@ -151,7 +178,10 @@ replacement_map = {
         'replacement': '$1',
         'init': ''},
     'job="kube-state-metrics"': {
-        'replacement': 'job="kube-state-metrics", namespace=~"{{ $targetNamespace }}"',
+        'replacement': 'job="{{ $kubeStateMetricsJob }}"',
+        'init': '{{- $kubeStateMetricsJob := include "kube-prometheus-stack-kube-state-metrics.name" . }}'},
+    'job="{{ $kubeStateMetricsJob }}"': {
+        'replacement': 'job="{{ $kubeStateMetricsJob }}", namespace=~"{{ $targetNamespace }}"',
         'limitGroup': ['kubernetes-apps'],
         'init': '{{- $targetNamespace := .Values.defaultRules.appNamespacesTarget }}'},
     'job="kubelet"': {
@@ -163,6 +193,9 @@ replacement_map = {
         'init': ''},
     '(namespace,service)': {
         'replacement': '(namespace,service,cluster)',
+        'init': ''},
+    '(namespace, job, handler': {
+        'replacement': '(cluster, namespace, job, handler',
         'init': ''}
 }
 
@@ -394,6 +427,63 @@ def add_custom_keep_firing_for(rules, indent=4):
     return rules
 
 
+def add_custom_for(rules, indent=4):
+    """Add custom 'for:' condition in rules"""
+    replace_field = "for:"
+    rules = add_custom_alert_rules(rules, replace_field, indent)
+
+    return rules
+
+
+def add_custom_severity(rules, indent=4):
+    """Add custom 'severity:' condition in rules"""
+    replace_field = "severity:"
+    rules = add_custom_alert_rules(rules, replace_field, indent)
+
+    return rules
+
+
+def add_custom_alert_rules(rules, key_to_replace, indent):
+    """Extend alert field to allow custom values"""
+    key_to_replace_indented = ' ' * indent + key_to_replace
+    alertkey_field = '- alert:'
+    found_alert_key = False
+    alertname = None
+    updated_rules = ''
+
+    # pylint: disable=C0200
+    i = 0
+    while i < len(rules):
+        if rules[i:i + len(alertkey_field)] == alertkey_field:
+            found_alert_key = True
+            start_index_word_after = i + len(alertkey_field) + 1
+            end_index_alertkey_field = start_index_word_after
+            while end_index_alertkey_field < len(rules) and rules[end_index_alertkey_field].isalnum():
+                end_index_alertkey_field += 1
+
+            alertname = rules[start_index_word_after:end_index_alertkey_field]
+
+        if found_alert_key:
+            if rules[i:i + len(key_to_replace_indented)] == key_to_replace_indented:
+                found_alert_key = False
+                start_index_key_value = i + len(key_to_replace_indented) + 1
+                end_index_key_to_replace = start_index_key_value
+                while end_index_key_to_replace < len(rules) and rules[end_index_key_to_replace].isalnum():
+                    end_index_key_to_replace += 1
+
+                word_after_key_to_replace = rules[start_index_key_value:end_index_key_to_replace]
+                new_key = key_to_replace_indented + ' {{ dig "' + alertname + \
+                    '" "' + key_to_replace[:-1] + '" "' + \
+                    word_after_key_to_replace + '" .Values.customRules }}'
+                updated_rules += new_key
+                i = end_index_key_to_replace
+
+        updated_rules += rules[i]
+        i += 1
+
+    return updated_rules
+
+
 def write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes):
     fix_expr(group['rules'])
     group_name = group['name']
@@ -411,11 +501,13 @@ def write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes)
     rules = add_custom_labels(rules, group)
     rules = add_custom_annotations(rules, group)
     rules = add_custom_keep_firing_for(rules)
+    rules = add_custom_for(rules)
+    rules = add_custom_severity(rules)
     rules = add_rules_conditions_from_condition_map(rules)
     rules = add_rules_per_rule_conditions(rules, group)
     # initialize header
     lines = header % {
-        'name': group['name'],
+        'name': sanitize_name(group['name']),
         'url': url,
         'condition': condition_map.get(group['name'], ''),
         'init_line': init_line,
@@ -424,7 +516,12 @@ def write_group_to_file(group, url, destination, min_kubernetes, max_kubernetes)
     }
 
     # rules themselves
-    lines += rules
+    lines += re.sub(
+        r'\s(by|on) ?\(',
+        r' \1 ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}',
+        rules,
+        flags=re.IGNORECASE
+    )
 
     # footer
     lines += '{{- end }}'
@@ -450,28 +547,75 @@ https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-promet
         f.write('{{- define "rules.names" }}\n')
         f.write('rules:\n')
         for rule in condition_map:
-            f.write('  - "%s"\n' % rule)
+            f.write('  - "%s"\n' % sanitize_name(rule))
         f.write('{{- end }}')
 
 def main():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     init_yaml_styles()
     # read the rules, create a new template file per group
     for chart in charts:
-        print("Generating rules from %s" % chart['source'])
+        if 'git' in chart:
+            if 'source' not in chart:
+                chart['source'] = '_mixin.jsonnet'
 
-        if chart['source'].startswith("file://"):
-            f = open(chart['source'][7:])
-            raw_text = f.read()
+            url = chart['git']
+
+            print("Clone %s" % chart['git'])
+            checkout_dir = os.path.basename(chart['git'])
+            shutil.rmtree(checkout_dir, ignore_errors=True)
+
+            branch = "main"
+            if 'branch' in chart:
+                branch = chart['branch']
+
+            subprocess.run(["git", "init", "--initial-branch", "main", checkout_dir, "--quiet"])
+            subprocess.run(["git", "-C", checkout_dir, "remote", "add", "origin", chart['git']])
+            subprocess.run(["git", "-C", checkout_dir, "fetch", "--depth", "1", "origin", branch, "--quiet"])
+            subprocess.run(["git", "-c", "advice.detachedHead=false", "-C", checkout_dir, "checkout", "FETCH_HEAD", "--quiet"])
+
+            if chart.get('mixin'):
+                cwd = os.getcwd()
+
+                source_cwd = chart['cwd']
+                mixin_file = chart['source']
+
+                mixin_dir = cwd + '/' + checkout_dir + '/' + source_cwd + '/'
+                if os.path.exists(mixin_dir + "jsonnetfile.json"):
+                    print("Running jsonnet-bundler, because jsonnetfile.json exists")
+                    subprocess.run(["jb", "install"], cwd=mixin_dir)
+
+                if 'content' in chart:
+                    f = open(mixin_dir + mixin_file, "w")
+                    f.write(chart['content'])
+                    f.close()
+
+                print("Generating rules from %s" % mixin_file)
+                print("Change cwd to %s" % checkout_dir + '/' + source_cwd)
+                os.chdir(mixin_dir)
+
+                alerts = json.loads(_jsonnet.evaluate_snippet(mixin_file, chart['mixin'], import_callback=jsonnet_import_callback))
+
+                os.chdir(cwd)
+            else:
+                with open(checkout_dir + '/' + chart['source'], "r") as f:
+                    raw_text = f.read()
+
+                alerts = yaml.full_load(raw_text)
+
         else:
-            response = requests.get(chart['source'])
+            url = chart['source']
+            print("Generating rules from %s" % url)
+            response = requests.get(url)
             if response.status_code != 200:
                 print('Skipping the file, response code %s not equals 200' % response.status_code)
                 continue
             raw_text = response.text
-        if chart.get('is_mixin'):
-            alerts = json.loads(_jsonnet.evaluate_snippet(chart['source'], raw_text + '.prometheusAlerts'))
-        else:
-            alerts = yaml.full_load(raw_text)
+            if chart.get('mixin'):
+                alerts = json.loads(_jsonnet.evaluate_snippet(url, raw_text + '.prometheusAlerts'))
+            else:
+                alerts = yaml.full_load(raw_text)
 
         if ('max_kubernetes' not in chart):
             chart['max_kubernetes']="9.9.9-9"
@@ -479,12 +623,16 @@ def main():
         # etcd workaround, their file don't have spec level
         groups = alerts['spec']['groups'] if alerts.get('spec') else alerts['groups']
         for group in groups:
-            write_group_to_file(group, chart['source'], chart['destination'], chart['min_kubernetes'], chart['max_kubernetes'])
+            write_group_to_file(group, url, chart['destination'], chart['min_kubernetes'], chart['max_kubernetes'])
 
     # write rules.names named template
     write_rules_names_template()
 
     print("Finished")
+
+
+def sanitize_name(name):
+    return re.sub('[_]', '-', name).lower()
 
 
 def jsonnet_import_callback(base, rel):

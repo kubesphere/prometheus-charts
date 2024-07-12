@@ -2,8 +2,3 @@
 ---
 {{ tpl (toYaml .) $ }}
 {{ end }}
-
-{{- if .Values.extraManifestsTpl }}
----
-{{- tpl .Values.extraManifestsTpl . }}
-{{- end }}
