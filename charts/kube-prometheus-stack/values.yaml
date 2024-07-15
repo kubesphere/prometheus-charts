@@ -1401,7 +1401,7 @@ kubelet:
         regex: '.+;'
       - sourceLabels: [__name__]
         action: keep
-        regex: container_cpu_cfs_.+_periods_total|container_cpu_usage_seconds_total|container_fs_(limit|usage)_bytes|container_fs_(reads|writes)_bytes_total|container_fs_(reads|writes)_total|container_memory_(cache|mapped_file|rss|usage_bytes|working_set_bytes)|container_network_(receive|transmit)_(bytes|packets|packets_dropped)_total|container_processes.*|container_threads.*|container_fs.*
+        regex: container_cpu_cfs_.+_periods_total|container_cpu_usage_seconds_total|container_fs_(limit|usage)_bytes|container_fs_(reads|writes)_bytes_total|container_fs_(reads|writes)_total|container_memory_(cache|mapped_file|rss|usage_bytes|working_set_bytes)|container_network_(receive|transmit)_(bytes|packets|packets_dropped)_total|container_processes.*|container_threads.*
     # - sourceLabels: [__name__, image]
     #   separator: ;
     #   regex: container_([a-z_]+);
@@ -2176,7 +2176,6 @@ kube-state-metrics:
     - kube_endpoint_(info|address_.+)
     - kube_job_(info|owner|spec_(parallelism|active_deadline_seconds)|status_(active|.+_time))
     - kube_cronjob_(info|status_.+|spec_.+)
-    - kube_namespace_(status_phase)
     - kube_persistentvolume_(info|capacity_.+)
     - kube_persistentvolumeclaim_(resource_.+|access_.+)
     - kube_secret_(type)
