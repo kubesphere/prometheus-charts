@@ -1,5 +1,5 @@
 {{- /*
-Generated from 'whizard-telemetry-kube-scheduler.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
+Generated from 'whizard-telemetry-kube-scheduler.rules' group from file://manifests/whizard-telemetry-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
@@ -96,7 +96,7 @@ spec:
         {{- end }}
       {{- end }}
       record: cluster_quantile:scheduler_scheduling_attempt_duration_seconds:histogram_quantile
-    - expr: sum by(cluster) (rate(scheduler_e2e_scheduling_duration_seconds_sum{job="kube-scheduler"}[5m])) / sum by(cluster) (rate(scheduler_e2e_scheduling_duration_seconds_count{job="kube-scheduler"}[5m]))
+    - expr: sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster) (rate(scheduler_e2e_scheduling_duration_seconds_sum{job="kube-scheduler"}[5m])) / sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster) (rate(scheduler_e2e_scheduling_duration_seconds_count{job="kube-scheduler"}[5m]))
       record: cluster:scheduler_e2e_scheduling_duration_seconds:avg
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -107,7 +107,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by(cluster) (rate(scheduler_scheduling_attempt_duration_seconds_sum{job="kube-scheduler"}[5m])) / sum by(cluster) (rate(scheduler_scheduling_attempt_duration_seconds_count{job="kube-scheduler"}[5m]))
+    - expr: sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster) (rate(scheduler_scheduling_attempt_duration_seconds_sum{job="kube-scheduler"}[5m])) / sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster) (rate(scheduler_scheduling_attempt_duration_seconds_count{job="kube-scheduler"}[5m]))
       record: cluster:scheduler_scheduling_attempt_duration_seconds:avg
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:

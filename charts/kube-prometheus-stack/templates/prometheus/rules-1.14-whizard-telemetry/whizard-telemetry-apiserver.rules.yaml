@@ -1,5 +1,5 @@
 {{- /*
-Generated from 'whizard-telemetry-apiserver.rules' group from file://../../../ks-prometheus/manifests/whizard-telemetry-prometheusRule.yaml
+Generated from 'whizard-telemetry-apiserver.rules' group from file://manifests/whizard-telemetry-prometheusRule.yaml
 Do not change in-place! In order to change this file first read following link:
 https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack/hack
 */ -}}
@@ -24,7 +24,7 @@ spec:
   groups:
   - name: whizard-telemetry-apiserver.rules
     rules:
-    - expr: sum by(cluster) (irate(apiserver_request_total{job="apiserver"}[5m]))
+    - expr: sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster) (irate(apiserver_request_total{job="apiserver"}[5m]))
       record: apiserver:apiserver_request_total:sum_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -35,7 +35,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, verb)(irate(apiserver_request_total{job="apiserver"}[5m]))
+    - expr: sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, verb)(irate(apiserver_request_total{job="apiserver"}[5m]))
       record: apiserver:apiserver_request_total:sum_verb_irate
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -46,7 +46,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by(cluster) (irate(apiserver_request_duration_seconds_sum{job="apiserver",subresource!="log", verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m])) / sum by(cluster) (irate(apiserver_request_duration_seconds_count{job="apiserver", subresource!="log",verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))
+    - expr: sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster) (irate(apiserver_request_duration_seconds_sum{job="apiserver",subresource!="log", verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m])) / sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster) (irate(apiserver_request_duration_seconds_count{job="apiserver", subresource!="log",verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))
       record: apiserver:apiserver_request_duration:avg
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:
@@ -57,7 +57,7 @@ spec:
           {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- end }}
-    - expr: sum by (cluster, verb)(irate(apiserver_request_duration_seconds_sum{job="apiserver",subresource!="log", verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))  / sum by (cluster, verb)(irate(apiserver_request_duration_seconds_count{job="apiserver", subresource!="log",verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))
+    - expr: sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, verb)(irate(apiserver_request_duration_seconds_sum{job="apiserver",subresource!="log", verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))  / sum by ({{ range $.Values.defaultRules.additionalAggregationLabels }}{{ . }},{{ end }}cluster, verb)(irate(apiserver_request_duration_seconds_count{job="apiserver", subresource!="log",verb!~"LIST|WATCH|WATCHLIST|PROXY|CONNECT"}[5m]))
       record: apiserver:apiserver_request_duration:avg_by_verb
       {{- if or .Values.defaultRules.additionalRuleLabels .Values.defaultRules.additionalRuleGroupLabels.whizardTelemetry }}
       labels:

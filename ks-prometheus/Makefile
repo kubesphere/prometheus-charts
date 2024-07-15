@@ -1,3 +1,5 @@
+PYTHON_BIN=$(shell which python3 || which python || echo python)
+
 .PHONY: all
 all: test update manifests ;$(info $(M)...Begin to test and build to generate manifests files.) @ ## Test and build to generate manifests files.
 
@@ -14,6 +16,9 @@ update: ; $(info $(M)...Update dependencies.) @ ## Update dependencies.
 # Build to generate manifests files
 manifests: ; $(info $(M)...Begin to build to generate manifests files.)  @ ## Build to generate manifests files
 	./build.sh main.jsonnet
+
+sync: manifests
+	$(PYTHON_BIN) sync_prometheus_rules.py
 
 .PHONY: test
 # Run tests
