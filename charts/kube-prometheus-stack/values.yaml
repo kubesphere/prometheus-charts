@@ -1401,7 +1401,7 @@ kubelet:
         regex: '.+;'
       - sourceLabels: [__name__]
         action: keep
-        regex: container_cpu_cfs_.+_periods_total|container_cpu_usage_seconds_total|container_fs_(limit|usage)_bytes|container_fs_(reads|writes)_bytes_total|container_fs_(reads|writes)_total|container_memory_(cache|mapped_file|rss|usage_bytes|working_set_bytes)|container_network_(receive|transmit)_(bytes|packets|packets_dropped)_total|container_processes.*|container_threads.*
+        regex: container_cpu_cfs_.*periods_total|container_cpu_usage_seconds_total|container_fs_(limit|usage)_bytes|container_fs_(reads|writes)_bytes_total|container_fs_(reads|writes)_total|container_memory_(cache|mapped_file|rss|usage_bytes|working_set_bytes)|container_network_(receive|transmit)_(bytes|packets|packets_dropped)_total|container_processes.*|container_threads.*
     # - sourceLabels: [__name__, image]
     #   separator: ;
     #   regex: container_([a-z_]+);
@@ -2421,7 +2421,7 @@ prometheus-node-exporter:
       ##
       metricRelabelings:
         - action: keep
-          regex: node_(uname|network)_info|node_cpu_.+|node_memory_Mem.+_bytes|node_memory_SReclaimable_bytes|node_memory_Cached_bytes|node_memory_Buffers_bytes|node_network_(.+_bytes_total|up)|node_network_.+_errs_total|node_network_.+_packets_total|node_nf_conntrack_entries.*|node_disk_.+_completed_total|node_disk_.+_bytes_total|node_filesystem_files|node_filesystem_files_free|node_filesystem_avail_bytes|node_filesystem_size_bytes|node_filesystem_free_bytes|node_filesystem_readonly|node_load.+|node_timex_offset_seconds|node_timex_maxerror_seconds|node_timex_sync_status|node_filefd_allocated|node_filefd_maximum|node_md_disks|node_md_disks_required|node_textfile_scrape_error
+          regex: node_(uname|network)_info|node_cpu_.+|node_memory_Mem.+_bytes|node_memory_SReclaimable_bytes|node_memory_Cached_bytes|node_memory_Buffers_bytes|node_network_(.+_bytes_total|up)|node_network_.+_errs_total|node_network_.+_packets_total|node_nf_conntrack_entries.*|node_disk_.+_completed_total|node_disk_.+_bytes_total|node_filesystem_files|node_filesystem_files_free|node_filesystem_avail_bytes|node_filesystem_size_bytes|node_filesystem_free_bytes|node_filesystem_readonly|node_load.+|node_timex_offset_seconds|node_timex_maxerror_seconds|node_timex_sync_status|node_filefd_allocated|node_filefd_maximum|node_md_disks|node_md_disks_required|node_textfile_scrape_error|node_infiniband_.+
           sourceLabels:
             - __name__
       # - sourceLabels: [__name__]
@@ -3132,11 +3132,11 @@ prometheusOperator:
     # resource config for prometheusConfigReloader
     resources:
       requests:
-        cpu: 200m
+        cpu: 20m
         memory: 50Mi
       limits:
         cpu: 500m
-        memory: 50Mi
+        memory: 500Mi
       # requests:
       #   cpu: 200m
       #   memory: 50Mi
