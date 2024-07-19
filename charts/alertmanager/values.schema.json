@@ -11,6 +11,9 @@
         "automountServiceAccountToken": {
             "type": "boolean"
         },
+        "baseURL": {
+            "type": "string"
+        },
         "command": {
             "type": "array"
         },
@@ -498,6 +501,23 @@
                 },
                 "extraPorts": {
                     "type": "array"
+                },
+                "ipDualStack": {
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "ipFamilies": {
+                            "items": {
+                                "type": "string"
+                            },
+                            "type": "array"
+                        },
+                        "ipFamilyPolicy": {
+                            "type": "string"
+                        }
+                    },
+                    "type": "object"
                 },
                 "labels": {
                     "properties": {},

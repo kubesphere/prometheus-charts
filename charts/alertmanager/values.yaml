@@ -25,6 +25,9 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
+# Full external URL where alertmanager is reachable, used for backlinks.
+baseURL: ""
+
 extraArgs: {}
 
 ## Additional Alertmanager Secret mounts
@@ -123,6 +126,12 @@ service:
 
   # Optionally specify extra list of additional ports exposed on both services
   extraPorts: []
+
+  # ip dual stack
+  ipDualStack:
+    enabled: false
+    ipFamilies: ["IPv6", "IPv4"]
+    ipFamilyPolicy: "PreferDualStack"
 
 # Configuration for creating a separate Service for each statefulset Alertmanager replica
 #
@@ -324,7 +333,7 @@ configmapReload:
     defaultRegistry: quay.io
     registry: ""
     repository: prometheus-operator/prometheus-config-reloader
-    tag: v0.68.0
+    tag: v0.75.1
     pullPolicy: IfNotPresent
 
   # containerPort: 9533
