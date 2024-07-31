@@ -288,7 +288,7 @@ serviceAccount:
   name: prometheus-node-exporter
   annotations: {}
   imagePullSecrets: []
-  automountServiceAccountToken: false
+  automountServiceAccountToken: true
 
 securityContext:
   fsGroup: 65534
