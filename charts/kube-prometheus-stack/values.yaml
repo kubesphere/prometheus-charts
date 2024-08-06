@@ -64,7 +64,7 @@ defaultRules:
     kubeApiserverBurnrate: true
     kubeApiserverHistogram: true
     kubeApiserverSlos: false
-    kubeControllerManager: true
+    kubeControllerManager: false
     kubelet: true
     kubeProxy: false
     kubePrometheusGeneral: true
@@ -75,8 +75,8 @@ defaultRules:
     kubernetesSystem: false
     kubeSchedulerAlerting: false
     kubeSchedulerRecording: true
-    kubeStateMetrics: true
-    network: true
+    kubeStateMetrics: false
+    network: false
     node: true
     nodeExporterAlerting: false
     nodeExporterRecording: true
