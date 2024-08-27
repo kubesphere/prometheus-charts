@@ -17,6 +17,10 @@ replicaAutoSet: true
 # Default Kubernetes value is set to 10
 revisionHistoryLimit: 10
 
+# Prefered to be Parallel because of
+# https://github.com/prometheus-operator/prometheus-operator/blob/release-0.75/pkg/alertmanager/statefulset.go#L770
+podManagementPolicy: "Parallel"
+
 image:
   defaultRegistry: quay.io
   registry: ""
@@ -25,10 +29,25 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: ""
 
+kubectl:
+  image:
+    registry: ""
+    repository: kubesphere/kubectl
+    tag: "v1.27.12"
+    pullPolicy: IfNotPresent
+  resources:
+    limits:
+      cpu: 500m
+      memory: 500Mi
+    requests:
+      cpu: 10m
+      memory: 10Mi
+
 # Full external URL where alertmanager is reachable, used for backlinks.
 baseURL: ""
 
-extraArgs: {}
+extraArgs:
+  "cluster.reconnect-timeout": 5m
 
 ## Additional Alertmanager Secret mounts
 # Defines additional mounts with secrets. Secrets must be manually created in the namespace.

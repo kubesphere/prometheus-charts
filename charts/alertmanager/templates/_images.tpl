@@ -51,3 +51,8 @@
     {{- toYaml .Values.global.imagePullSecrets }}
 {{- end }}
 {{- end -}}
+
+{{- define "alertmanager.kubectl.image" -}}
+{{- $_dict := (dict "imageRoot" .Values.kubectl.image "global" .Values.global) }}
+{{- include "alertmanager.common.images.image" $_dict }}
+{{- end -}}

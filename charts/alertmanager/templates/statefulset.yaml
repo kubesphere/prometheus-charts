@@ -17,6 +17,7 @@ spec:
   minReadySeconds: {{ .Values.minReadySeconds }}
   {{- end }}
   revisionHistoryLimit: {{ .Values.revisionHistoryLimit }}
+  podManagementPolicy: {{ .Values.podManagementPolicy }}
   selector:
     matchLabels:
       {{- include "alertmanager.selectorLabels" . | nindent 6 }}
