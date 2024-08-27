@@ -1,0 +1,80 @@
+{{- $sts := lookup "apps/v1" "StatefulSet" (include "alertmanager.namespace" .) (include "alertmanager.fullname" .) -}}
+{{- if and $sts $sts.spec }}
+{{- if or (empty $sts.spec.podManagementPolicy) (ne $sts.spec.podManagementPolicy .Values.podManagementPolicy) }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "alertmanager.fullname" . }}-pre-upgrade
+  namespace: {{ include "alertmanager.namespace" . }}
+  labels:
+    {{- include "alertmanager.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+rules:
+  - apiGroups: 
+    - apps
+    resources:
+    - statefulsets
+    verbs:
+    - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "alertmanager.fullname" . }}-pre-upgrade
+  namespace: {{ include "alertmanager.namespace" . }}
+  labels:
+    {{- include "alertmanager.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "alertmanager.fullname" . }}-pre-upgrade
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "alertmanager.fullname" . }}-pre-upgrade
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "alertmanager.fullname" . }}-pre-upgrade
+  labels:
+    {{- include "alertmanager.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "alertmanager.fullname" . }}-pre-upgrade
+  namespace: {{ include "alertmanager.namespace" . }}
+  labels:
+    {{- include "alertmanager.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "alertmanager.fullname" . }}-pre-upgrade
+      containers:
+        - name: pre-upgrade
+          image:  {{ template "alertmanager.kubectl.image" . }}
+          command:
+            - /bin/bash
+            - -c
+            - |
+              kubectl -n {{ include "alertmanager.namespace" . }} delete statefulset {{ include "alertmanager.fullname" . }} --cascade=orphan --ignore-not-found=true
+          resources:
+            {{- toYaml .Values.kubectl.resources | nindent 12 }}
+{{- end }}
+{{- end }}
