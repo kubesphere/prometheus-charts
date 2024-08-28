@@ -124,13 +124,19 @@ extraContainers: []
 
 livenessProbe:
   httpGet:
-    path: /
+    path: /-/healthy
     port: http
+  timeoutSeconds: 3
+  failureThreshold: 10
 
 readinessProbe:
   httpGet:
-    path: /
+    path: /-/ready
     port: http
+  initialDelaySeconds: 3
+  timeoutSeconds: 3
+  periodSeconds: 5
+  failureThreshold: 10
 
 service:
   annotations: {}
