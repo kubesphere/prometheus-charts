@@ -325,6 +325,9 @@
         },
         "livenessProbe": {
             "properties": {
+                "failureThreshold": {
+                    "type": "integer"
+                },
                 "httpGet": {
                     "properties": {
                         "path": {
@@ -335,6 +338,9 @@
                         }
                     },
                     "type": "object"
+                },
+                "timeoutSeconds": {
+                    "type": "integer"
                 }
             },
             "type": "object"
@@ -502,6 +508,9 @@
         },
         "readinessProbe": {
             "properties": {
+                "failureThreshold": {
+                    "type": "integer"
+                },
                 "httpGet": {
                     "properties": {
                         "path": {
@@ -512,6 +521,15 @@
                         }
                     },
                     "type": "object"
+                },
+                "initialDelaySeconds": {
+                    "type": "integer"
+                },
+                "periodSeconds": {
+                    "type": "integer"
+                },
+                "timeoutSeconds": {
+                    "type": "integer"
                 }
             },
             "type": "object"
